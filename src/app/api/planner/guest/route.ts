@@ -4,6 +4,7 @@ import { AUTOMATION_PACKAGES } from '@/lib/constants/visual-planner';
 import { createServiceClient } from '@/lib/supabase/server';
 import { calculateBOQ } from '@/lib/engines/boq/boq-engine';
 import { generateSiteSurveyChecklist } from '@/lib/engines/sales/site-survey';
+import type { PropertyType, ProjectReadiness } from '@/lib/types';
 
 const vectorSchema = z.object({ x: z.number().finite(), y: z.number().finite(), z: z.number().finite() });
 const placementSchema = z.object({
@@ -45,7 +46,11 @@ const roomSchema = z.object({
 const requestSchema = z.object({
   automationPackage: z.enum(['full_home', 'controls', 'lighting', 'security', 'not_sure']),
   property: z.object({
-    propertyType: z.string().min(1).max(80),
+    propertyType: z.enum([
+      'studio_apartment', '1bhk', '2bhk', '3bhk', '4bhk', '5bhk', '6plus_bhk',
+      'penthouse', 'duplex', '2storey_villa', '3storey_villa', 'independent_house',
+      'farmhouse', 'office', 'retail', 'hospitality', 'custom'
+    ]) as z.ZodType<PropertyType>,
     floors: z.number().int().min(1).max(10),
     bedrooms: z.number().int().min(0).max(30),
     bathrooms: z.number().int().min(0).max(30),
@@ -156,7 +161,18 @@ export async function POST(request: Request) {
     // 3. Generate internal sales metadata
     const allPlacements = body.rooms.flatMap(r => r.placements);
     const propertyParams = body.property;
-    const readinessParams = body.readiness || {}; 
+    
+    // Convert readiness strings to properly typed ProjectReadiness
+    const readinessParams: ProjectReadiness = {
+      condition: (body.readiness?.condition as any) || null,
+      automationApproach: (body.readiness?.automationApproach as any) || null,
+      electrical: (body.readiness?.electrical as any) || null,
+      interior: (body.readiness?.interior as any) || null,
+      ceiling: null,
+      network: (body.readiness?.network as any) || null,
+      backupPower: (body.readiness?.backupPower as any) || null,
+      floorPlan: null,
+    };
 
     const boq = calculateBOQ(allPlacements, propertyParams, readinessParams);
     const siteSurvey = generateSiteSurveyChecklist(propertyParams, readinessParams, body.rooms);
