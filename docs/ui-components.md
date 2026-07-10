@@ -39,3 +39,29 @@ A visual summary card for rooms, showing the room icon, name, and floor. It prov
 
 ### `SmartSummaryCard`
 A premium display widget for the final review steps, replacing plain HTML tables with glass-morphic containers, icons, and clearly separated key-value pairs.
+
+## Visualizer Components
+
+### `DesktopRoomSetup`
+
+Composes the full-width 3D canvas, visualizer toolbar, recommendation action, device palette, placement inspector, and dimension editor.
+
+### `MobileRoomSetup`
+
+Provides room tabs, 2D/3D switching, ceiling control, horizontal device tray, recommendation action, placement inspector, and sticky navigation.
+
+### `RoomCanvas3D` and `RoomScene`
+
+Create the React Three Fiber canvas, camera, lighting, room shell, furniture, device meshes, coverage geometry, and orbit controls.
+
+### `RoomMiniMap`
+
+Projects the same device placements into an SVG top view. Anchor dots represent actual room coordinates while labels may be offset to remain readable.
+
+### `DeviceModel`
+
+Renders a device-specific mesh, stable category color, icon/name label, delete X control, selection state, coverage, and constrained drag interaction.
+
+### `RoomFurnishings`
+
+Generates dimension-aware bedroom, living, dining, kitchen, and bathroom staging. Furniture is visual context and does not modify project-device data.

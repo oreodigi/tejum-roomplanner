@@ -76,16 +76,33 @@ function MediaConsole({ position, rotation = [0, 0, 0] }: { position: Vec3; rota
   return <group position={position} rotation={rotation}><Box position={[0, 0.4, 0]} size={[1.7, 0.65, 0.42]} color={WOOD_DARK} /><Box position={[0, 1.25, 0.08]} size={[1.55, 0.92, 0.06]} color="#151c21" /><Box position={[0, 1.25, 0.045]} size={[1.36, 0.74, 0.012]} color="#226c74" /></group>;
 }
 
+function DiningChair({ position, rotation = [0, 0, 0] }: { position: Vec3; rotation?: Vec3 }) {
+  return (
+    <group position={position} rotation={rotation}>
+      <Box position={[0, 0.48, 0]} size={[0.48, 0.12, 0.48]} color={FABRIC} />
+      <Box position={[0, 0.83, 0.2]} size={[0.48, 0.58, 0.1]} color={FABRIC_DARK} />
+      {[-1, 1].flatMap((x) => [-1, 1].map((z) => (
+        <Box key={`${x}-${z}`} position={[x * 0.18, 0.22, z * 0.18]} size={[0.06, 0.44, 0.06]} color={WOOD_DARK} />
+      )))}
+    </group>
+  );
+}
+
 function DiningTable({ width, length }: { width: number; length: number }) {
   const tableWidth = Math.min(2.35, width * 0.55);
   const tableLength = Math.min(1.2, length * 0.36);
+  const sideOffset = tableLength / 2 + 0.43;
+  const endOffset = tableWidth / 2 + 0.43;
   return (
     <group position={[0, 0, 0.1]}>
       <Box position={[0, 0.86, 0]} size={[tableWidth, 0.12, tableLength]} color={WOOD} />
       {[-1, 1].map((side) => <Box key={side} position={[side * tableWidth * 0.38, 0.42, 0]} size={[0.1, 0.8, tableLength - 0.08]} color={WOOD_DARK} />)}
-      {[-1, 1].map((side) => <Sofa key={side} position={[0, 0, side * (tableLength / 2 + 0.42)]} rotation={[0, side < 0 ? 0 : Math.PI, 0]} width={Math.min(1.65, tableWidth * 0.74)} />)}
-      <Box position={[-tableWidth / 2 - 0.4, 0.42, 0]} size={[0.65, 0.72, 0.55]} color={FABRIC_DARK} />
-      <Box position={[tableWidth / 2 + 0.4, 0.42, 0]} size={[0.65, 0.72, 0.55]} color={FABRIC_DARK} />
+      {[-0.55, 0.55].flatMap((x) => [
+        <DiningChair key={`${x}-back`} position={[x, 0, -sideOffset]} rotation={[0, Math.PI, 0]} />,
+        <DiningChair key={`${x}-front`} position={[x, 0, sideOffset]} />,
+      ])}
+      <DiningChair position={[-endOffset, 0, 0]} rotation={[0, -Math.PI / 2, 0]} />
+      <DiningChair position={[endOffset, 0, 0]} rotation={[0, Math.PI / 2, 0]} />
     </group>
   );
 }
@@ -130,7 +147,7 @@ export function RoomFurnishings({ roomType, width, length }: { roomType: RoomTyp
           <BedsideTable position={[-bedWidth / 2 - 0.3, 0, bedZ - bedLength / 2 + 0.22]} />
           <BedsideTable position={[bedWidth / 2 + 0.3, 0, bedZ - bedLength / 2 + 0.22]} />
           <Wardrobe position={[-width / 2 + 0.45, 0, length / 2 - 0.9]} />
-          <Door position={[width / 2 - 0.06, 0, length / 2 - 0.8]} rotation={[0, Math.PI / 2, 0]} />
+          <Door position={[width / 2 - 0.62, 0, -length / 2 + 0.06]} />
         </>;
       })()}
       {living && <><Sofa position={[0, 0, -length / 2 + 0.68]} /><Sofa position={[-width / 2 + 0.72, 0, 0.25]} rotation={[0, Math.PI / 2, 0]} width={1.8} /><CoffeeTable position={[0.35, 0, 0.25]} /><MediaConsole position={[width / 2 - 0.27, 0, 0.05]} rotation={[0, Math.PI / 2, 0]} /></>}

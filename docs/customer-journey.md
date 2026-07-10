@@ -26,9 +26,9 @@ The room generator uses the selected counts, not a fixed template. The customer 
 
 ### 5. Visual Room Setup
 
-Desktop shows a 3D rectangular room, device palette, recommendation control, placement inspector, and dimensions. The customer can apply a preset or select a device and place it on the room shell.
+Desktop shows a full-width 3D rectangular room, generated furniture, device palette, recommendation control, placement inspector, and dimensions. The customer can apply a preset, place a device on the room shell, drag it on its valid mounting surface, or remove it from the floating X control.
 
-Mobile shows a 2D top view instead of squeezing the desktop canvas. The device tray is horizontal, room navigation is swipeable, and Save & Next Room stays in thumb reach.
+Mobile provides both an interactive 2D plan and the same 3D room viewer. The device tray is horizontal, room navigation is swipeable, and Save & Next Room stays in thumb reach.
 
 The draft is stored in browser local storage after every change.
 
@@ -63,4 +63,4 @@ Authenticated users can still access `/planner/projects` and legacy project rout
 
 ## Mobile Versus Desktop
 
-Mobile uses a dedicated header, compact progress, horizontal choice/room trays, 2D room plan, sticky primary action, and four-item bottom navigation. Desktop uses a wide visual workspace, persistent 3D canvas, device panel, and full flow header.
+Mobile uses a dedicated header, compact progress, horizontal choice/room trays, 2D/3D room switcher, sticky primary action, and four-item bottom navigation. Desktop uses a wide visual workspace, persistent 3D canvas, device panel, and full flow header.

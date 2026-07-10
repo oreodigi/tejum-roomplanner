@@ -1,51 +1,130 @@
 # Visual Planner Architecture
 
-## Entry Point
+## Route and Entry Point
 
-`/planner/new` renders `VisualPlannerApp`. The route is public in the Next.js proxy. Other planner project routes remain authenticated.
+`/planner/new` is the public guest configurator. It renders `VisualPlannerApp`, which selects the active guided step from the persisted visual planner store.
 
-## State
+Authenticated project, admin, sales, BOQ, proposal, and catalogue routes remain separate. The guest planner does not replace the legacy authenticated project store.
 
-`useVisualPlannerStore` persists the guest draft under `tejum-visual-planner-v1`. It owns package, property, generated rooms, layouts, device placements, contact draft, active room, and conversion state.
+## Guest State
 
-The existing authenticated `usePlannerStore` is preserved for legacy project pages.
+`src/lib/stores/visual-planner-store.ts` owns:
+
+- active planner step
+- automation package
+- property draft
+- generated rooms
+- room dimensions and setup tiers
+- spatial device placements
+- active room
+- contact/conversion draft
+- persisted project ID
+
+Zustand persists this state under `tejum-visual-planner-v1`. Backward navigation and page reloads must not clear customer answers.
 
 ## Room Generation
 
-`generateRoomsForProperty` now builds all maps from effective floor and room counts. It distributes bedrooms, bathrooms, balconies, passages, and stairs across floors and adds requested parking/outdoor spaces.
+`src/lib/engines/room-generator.ts` generates a room map from effective property counts. Each room receives:
 
-## Recommendations And Estimate
+- ID, name, type, floor number, and floor name
+- setup tier
+- completion percentage
+- rectangular `RoomLayout`
+- device placements
 
-`visual-planner.ts` contains device definitions and room presets mapped to real `device_types.name` values. `visual-estimate-engine.ts` calculates low/high hardware, installation, and integration amounts from placed devices.
+Default dimensions come from `getDefaultRoomDimensions` in `src/lib/constants/visual-planner.ts`.
 
-## Visualizer
+## Device Recommendations
 
-Desktop loads `RoomCanvas3D` dynamically with SSR disabled. The scene uses lightweight geometry only:
+`src/lib/constants/visual-planner.ts` contains the device catalog and room presets. A recommended setup selects device keys based on room type, setup tier, and automation package.
 
-- floor and three walls
-- optional ceiling
-- orbit camera controls
-- simple device geometry
-- selected-device indicator
-- camera, motion, and network coverage geometry
-- editable placement coordinates and room dimensions
+`createPlacement` assigns each recommended device an initial room-aware anchor. `normalizePlacement` then enforces its final surface, mounting height, bounds, and rotation.
 
-Mobile uses `RoomMiniMap`, an interactive SVG top view. Taps are translated into room coordinates and use the device mounting rules for Y position.
+## Placement Geometry
 
-## Persistence
+`src/lib/engines/placement-geometry.ts` is the shared placement source of truth.
 
-`POST /api/planner/guest` validates the complete draft with Zod and uses a server-only Supabase service client. It maps each visual placement to one `project_devices` row, then links `device_placements.project_device_id` to preserve BOQ/estimate compatibility.
+It handles:
 
-If persistence fails midway, the endpoint removes the partially created project, lead, and customer.
+- nearest valid wall resolution
+- room-edge margins
+- wall plane coordinates
+- ceiling and floor height enforcement
+- corner snapping
+- mounting-height clamping
+- wall and corner rotations
+
+The store calls normalization for recommended placement, manual placement, 2D dragging, 3D dragging, and inspector coordinate edits.
+
+## 3D Visualizer
+
+Desktop and mobile both lazy-load `RoomCanvas3D` with server-side rendering disabled.
+
+The component chain is:
+
+```text
+RoomCanvas3D
+  RoomScene
+    RoomShell
+      Floor
+      Wall
+      Ceiling
+    RoomFurnishings
+    DeviceModel[]
+      DeviceGeometry
+      CoverageCone
+      Html label and delete action
+    OrbitControls
+```
+
+The scene uses generated Three.js geometry. Furniture is room-specific and derived from dimensions. Side walls are rendered as cutaway surfaces so furniture remains visible from the default camera.
+
+## 2D Visualizer
+
+`RoomMiniMap` projects room coordinates into an SVG plan. It displays real device icons and labels, supports pointer dragging, and emits room coordinates back to the same store used by 3D.
+
+The 2D display may offset labels for readability, but the anchor dot represents the actual placement coordinate.
+
+## Desktop and Mobile
+
+Desktop uses a full-width 3D workspace with a persistent device panel, top-view control, ceiling control, room dimensions, and placement inspector.
+
+Mobile provides:
+
+- horizontal room tabs
+- explicit 2D and 3D modes
+- ceiling toggle in 3D mode
+- horizontal device tray
+- recommendation action
+- sticky room navigation
+- bottom planner navigation
+
+Both modes operate on the same room and placement objects.
+
+## Estimate
+
+`src/lib/engines/visual-estimate-engine.ts` calculates low and high ranges from actual placed device keys. It separates hardware, installation, and integration allowances.
+
+These values are planning guidance, not final quotation values.
+
+## Supabase Persistence
+
+`POST /api/planner/guest` validates the complete guest draft with Zod and uses a server-only Supabase client.
+
+The endpoint creates structured customer, lead, project, property, floor, room, layout, project-device, placement, and estimate records. Each spatial placement links to a `project_devices` record to preserve BOQ and proposal compatibility.
+
+If persistence fails partway through, the endpoint cleans up the partial project chain.
 
 ## Themes
 
-`next-themes` applies a `light` or `dark` class to the root. Tailwind color utilities resolve through runtime CSS tokens, so old and new screens share the same theme contract. Theme preference follows the system initially and persists after user selection.
+`next-themes` controls the root light/dark class. Planner surfaces resolve through runtime CSS tokens. The 3D scene uses its own material palette so room geometry remains legible in both UI themes.
 
-## Known MVP Boundaries
+## Current Boundaries
 
-- Rooms are rectangular; irregular polygons are stored but not edited visually.
-- Furniture and opening types are represented in the data model but do not yet have editing tools.
-- Desktop placement is click-based rather than full drag-and-drop CAD behavior.
-- Mobile intentionally uses top-view instead of WebGL for clarity and performance.
-- Prices are planning ranges, not product-specific quotations.
+- Rooms are rectangular.
+- The front wall is intentionally open for the default cutaway camera.
+- Furniture is generated staging, not user-editable furniture data.
+- Device collision avoidance is based on anchors and surface rules; it is not a rigid-body physics simulation.
+- Existing wall devices drag on their current wall plane. Moving a device to another wall requires placing it on that wall again.
+- Surface devices use a defined mounting height; they are not yet aware of individual furniture-top collision surfaces.
+- Estimates use catalog ranges rather than final product SKUs.
