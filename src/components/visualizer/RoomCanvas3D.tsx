@@ -1,6 +1,7 @@
 'use client';
 
 import { Canvas } from '@react-three/fiber';
+import { getDeviceDefinition } from '@/lib/constants/visual-planner';
 import type { SpatialVector } from '@/lib/types';
 import type { VisualPlannerRoom } from '@/lib/stores/visual-planner-store';
 import { RoomScene } from './RoomScene';
@@ -20,6 +21,11 @@ interface RoomCanvas3DProps {
 export default function RoomCanvas3D({ room, selectedPlacementId, selectedDeviceKey, showCeiling, topView = false, onSelectPlacement, onPlace, onMovePlacement, onDeletePlacement }: RoomCanvas3DProps) {
   function handleSurfacePlace(position: SpatialVector, wallId: string) {
     if (!selectedDeviceKey) return;
+    const def = getDeviceDefinition(selectedDeviceKey);
+    if (def.placementType === 'ceiling' && wallId !== 'ceiling') return;
+    if (def.placementType === 'floor' && wallId !== 'floor') return;
+    if (def.placementType === 'wall' && (wallId === 'ceiling' || wallId === 'floor')) return;
+    if (def.placementType === 'corner' && (wallId === 'ceiling' || wallId === 'floor')) return;
     onPlace(position, wallId);
   }
 
@@ -34,6 +40,7 @@ export default function RoomCanvas3D({ room, selectedPlacementId, selectedDevice
         <RoomScene
           room={room}
           selectedPlacementId={selectedPlacementId}
+          selectedDeviceKey={selectedDeviceKey}
           showCeiling={showCeiling}
           topView={topView}
           onSelectPlacement={onSelectPlacement}
@@ -42,7 +49,18 @@ export default function RoomCanvas3D({ room, selectedPlacementId, selectedDevice
           onDeletePlacement={onDeletePlacement}
         />
       </Canvas>
-      {selectedDeviceKey && <div className="canvas-hint">Tap a wall, ceiling or floor to place</div>}
+      {selectedDeviceKey && (
+        <div className="canvas-hint">
+          {(() => {
+            const t = getDeviceDefinition(selectedDeviceKey).placementType;
+            if (t === 'ceiling') return 'Tap the ceiling to place this device';
+            if (t === 'floor') return 'Tap the floor to place this device';
+            if (t === 'wall') return 'Tap a wall to place this device';
+            if (t === 'corner') return 'Tap a corner area to place this device';
+            return 'Tap a surface area to place this device';
+          })()}
+        </div>
+      )}
       {!selectedDeviceKey && room.placements.length > 0 && <div className="canvas-drag-hint">Drag a device to move it</div>}
     </div>
   );

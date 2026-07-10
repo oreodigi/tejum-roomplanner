@@ -60,46 +60,76 @@ export function RoomMiniMap({ room, selectedDeviceKey, selectedPlacementId, onPl
           const pointX = 180 + (placement.position.x / room.layout.width_m) * 310;
           const pointY = 140 + (placement.position.z / room.layout.length_m) * 230;
           const cx = Math.max(62, Math.min(298, pointX));
-          const cy = Math.max(30, Math.min(250, pointY + (index % 2 === 0 ? -24 : 24)));
+          const cy = Math.max(30, Math.min(250, pointY + (index % 2 === 0 ? -26 : 26)));
           const device = getDeviceDefinition(placement.device_key);
           const visual = getDeviceVisual(placement.device_key);
+          const isSelected = selectedPlacementId === placement.id;
+          const isDragging = draggingPlacementId === placement.id;
           return (
             <g
               key={placement.id}
-              className={`room-minimap__device ${selectedPlacementId === placement.id ? 'is-selected' : ''} ${draggingPlacementId === placement.id ? 'is-dragging' : ''}`}
+              className={`room-minimap__device ${isSelected ? 'is-selected' : ''} ${isDragging ? 'is-dragging' : ''}`}
               style={{ '--device-color': visual.color } as CSSProperties}
-              onPointerDown={(event) => {
-                event.stopPropagation();
-                event.currentTarget.setPointerCapture(event.pointerId);
-                movedRef.current = false;
-                draggingPlacementRef.current = placement.id;
-                setDraggingPlacementId(placement.id);
-                onSelectPlacement(placement.id);
-              }}
-              onPointerMove={(event) => {
-                if (draggingPlacementRef.current !== placement.id) return;
-                event.stopPropagation();
-                const position = pointerToPosition(event, placement.position.y);
-                if (!position) return;
-                movedRef.current = true;
-                onMovePlacement(placement.id, position);
-              }}
-              onPointerUp={(event) => {
-                event.stopPropagation();
-                event.currentTarget.releasePointerCapture(event.pointerId);
-                draggingPlacementRef.current = null;
-                setDraggingPlacementId(null);
-              }}
-              onClick={(event) => {
-                event.stopPropagation();
-                if (!movedRef.current) onSelectPlacement(placement.id);
-              }}
             >
+              {device.coverage && isSelected && (
+                <path
+                  d={`M ${pointX} ${pointY} L ${pointX - 40} ${pointY + 60} A 60 60 0 0 0 ${pointX + 40} ${pointY + 60} Z`}
+                  fill={visual.color}
+                  fillOpacity="0.15"
+                  stroke={visual.color}
+                  strokeOpacity="0.3"
+                  transform={placement.wall_id === 'left' ? `rotate(-90 ${pointX} ${pointY})` : placement.wall_id === 'right' ? `rotate(90 ${pointX} ${pointY})` : placement.wall_id === 'back' ? `rotate(180 ${pointX} ${pointY})` : ''}
+                />
+              )}
+              {device.coverage === 'network' && isSelected && (
+                <circle cx={pointX} cy={pointY} r="80" fill={visual.color} fillOpacity="0.1" stroke={visual.color} strokeOpacity="0.2" />
+              )}
               <line x1={pointX} y1={pointY} x2={cx} y2={cy} />
-              <circle cx={pointX} cy={pointY} r="4" />
-              <rect x={cx - 52} y={cy - 15} width="104" height="30" rx="9" />
-              <DeviceIcon deviceKey={placement.device_key} x={cx - 43} y={cy - 7} width="14" height="14" aria-hidden="true" />
-              <text x={cx - 23} y={cy + 3}>{device.shortLabel}</text>
+              
+              {/* Draggable Anchor */}
+              <circle 
+                cx={pointX} 
+                cy={pointY} 
+                r={isSelected ? "12" : "8"} 
+                fill="transparent"
+                stroke={isSelected ? visual.color : 'transparent'}
+                strokeWidth="1.5"
+                onPointerDown={(event) => {
+                  event.stopPropagation();
+                  event.currentTarget.setPointerCapture(event.pointerId);
+                  movedRef.current = false;
+                  draggingPlacementRef.current = placement.id;
+                  setDraggingPlacementId(placement.id);
+                  onSelectPlacement(placement.id);
+                }}
+                onPointerMove={(event) => {
+                  if (draggingPlacementRef.current !== placement.id) return;
+                  event.stopPropagation();
+                  const position = pointerToPosition(event, placement.position.y);
+                  if (!position) return;
+                  movedRef.current = true;
+                  onMovePlacement(placement.id, position);
+                }}
+                onPointerUp={(event) => {
+                  event.stopPropagation();
+                  event.currentTarget.releasePointerCapture(event.pointerId);
+                  draggingPlacementRef.current = null;
+                  setDraggingPlacementId(null);
+                }}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  if (!movedRef.current) onSelectPlacement(placement.id);
+                }}
+                style={{ cursor: 'grab' }}
+              />
+              <circle cx={pointX} cy={pointY} r="4" style={{ pointerEvents: 'none' }} />
+
+              {/* Label Group */}
+              <g onClick={(e) => { e.stopPropagation(); onSelectPlacement(placement.id); }} style={{ cursor: 'pointer' }}>
+                <rect x={cx - 52} y={cy - 15} width="104" height="30" rx="9" />
+                <DeviceIcon deviceKey={placement.device_key} x={cx - 43} y={cy - 7} width="14" height="14" aria-hidden="true" />
+                <text x={cx - 23} y={cy + 3}>{device.shortLabel}</text>
+              </g>
             </g>
           );
         })}

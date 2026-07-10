@@ -1,18 +1,23 @@
 'use client';
 
 import type { ThreeEvent } from '@react-three/fiber';
-import type { SpatialVector } from '@/lib/types';
+import type { PlacementType, SpatialVector } from '@/lib/types';
 
 interface CeilingProps {
   width: number;
   length: number;
   height: number;
   visible: boolean;
+  selectedPlacementType?: PlacementType | null;
   onPlace: (position: SpatialVector, wallId: string) => void;
 }
 
-export function Ceiling({ width, length, height, visible, onPlace }: CeilingProps) {
-  if (!visible) return null;
+export function Ceiling({ width, length, height, visible, selectedPlacementType, onPlace }: CeilingProps) {
+  if (!visible && selectedPlacementType !== 'ceiling') return null;
+
+  const isValid = selectedPlacementType === 'ceiling';
+  const color = isValid ? '#9bcbb4' : '#f3eee5';
+  const opacity = isValid ? 0.6 : 0.28;
 
   return (
     <mesh
@@ -23,7 +28,7 @@ export function Ceiling({ width, length, height, visible, onPlace }: CeilingProp
       }}
     >
       <boxGeometry args={[width, 0.08, length]} />
-      <meshStandardMaterial color="#f3eee5" transparent opacity={0.28} depthWrite={false} />
+      <meshStandardMaterial color={color} transparent opacity={opacity} depthWrite={false} side={2} />
     </mesh>
   );
 }

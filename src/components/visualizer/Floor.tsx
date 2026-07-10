@@ -1,15 +1,19 @@
 'use client';
 
 import type { ThreeEvent } from '@react-three/fiber';
-import type { SpatialVector } from '@/lib/types';
+import type { PlacementType, SpatialVector } from '@/lib/types';
 
 interface FloorProps {
   width: number;
   length: number;
+  selectedPlacementType?: PlacementType | null;
   onPlace: (position: SpatialVector, wallId: string) => void;
 }
 
-export function Floor({ width, length, onPlace }: FloorProps) {
+export function Floor({ width, length, selectedPlacementType, onPlace }: FloorProps) {
+  const isValid = selectedPlacementType === 'floor' || selectedPlacementType === 'surface';
+  const color = isValid ? '#9bcbb4' : '#d8cdbb';
+
   return (
     <mesh
       position={[0, -0.06, 0]}
@@ -20,7 +24,7 @@ export function Floor({ width, length, onPlace }: FloorProps) {
       }}
     >
       <boxGeometry args={[width, 0.12, length]} />
-      <meshStandardMaterial color="#d8cdbb" roughness={0.76} />
+      <meshStandardMaterial color={color} roughness={0.6} metalness={0.05} />
     </mesh>
   );
 }

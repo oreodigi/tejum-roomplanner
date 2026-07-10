@@ -29,6 +29,10 @@ import {
   Sparkles,
   Trash2,
   WandSparkles,
+  Shield,
+  Wrench,
+  Award,
+  X,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { MobileAppShell } from '@/components/mobile/MobileAppShell';
@@ -52,6 +56,7 @@ import {
   type VisualPlannerRoom,
   type VisualPlannerStep,
 } from '@/lib/stores/visual-planner-store';
+import { trackPlannerEvent } from '@/lib/analytics/planner-events';
 
 const PACKAGE_ICONS = { Sparkles, SlidersHorizontal, Lightbulb, ShieldCheck, WandSparkles };
 const PROPERTY_ICONS = { BedSingle, Building2, House, HousePlus, PanelsTopLeft, Home, PencilRuler };
@@ -213,11 +218,16 @@ function RoomMapStage({ onConfigure }: { onConfigure: (roomId: string) => void }
   const floorNumbers = Array.from(new Set(rooms.map((room) => room.floorNumber))).sort((a, b) => a - b);
   const visibleRooms = rooms.filter((room) => room.floorNumber === activeFloor);
 
+  const handleGenerateRooms = () => {
+    generateRooms();
+    trackPlannerEvent('room_map_generated', { city: property.city });
+  };
+
   return (
     <section className="visual-stage visual-stage--rooms">
       <div className="room-map-heading">
         <StepHeading eyebrow="Your room map" title={`${rooms.length} spaces, ready to shape.`} description="Rename, duplicate or move rooms before setting up devices." />
-        <button type="button" onClick={generateRooms}><RotateCcw /> Regenerate map</button>
+        <button type="button" onClick={handleGenerateRooms}><RotateCcw /> Regenerate map</button>
       </div>
       <div className="floor-tabs">
         {floorNumbers.map((floor) => <button type="button" key={floor} className={activeFloor === floor ? 'is-active' : ''} onClick={() => setActiveFloor(floor)}>{floor === 0 ? 'Ground floor' : `Floor ${floor}`}<span>{rooms.filter((room) => room.floorNumber === floor).length}</span></button>)}
@@ -313,9 +323,37 @@ function ReviewStage({ rooms, packageName }: { rooms: VisualPlannerRoom[]; packa
 function EstimateStage({ rooms }: { rooms: VisualPlannerRoom[] }) {
   const automationPackage = useVisualPlannerStore((state) => state.automationPackage);
   const estimate = calculateVisualEstimate(rooms.flatMap((room) => room.placements), automationPackage);
+  const { lead, updateLead } = useVisualPlannerStore();
+  const [showSoftLead, setShowSoftLead] = useState(!lead.phone);
+  const [softLeadPhone, setSoftLeadPhone] = useState('');
+
+  const handleSoftLeadSubmit = () => {
+    if (softLeadPhone.length >= 10) {
+      updateLead({ phone: softLeadPhone, preferredContact: 'whatsapp' });
+      setShowSoftLead(false);
+      trackPlannerEvent('soft_lead_captured', { source: 'estimate_stage' });
+    }
+  };
+
   return (
     <section className="visual-stage visual-stage--estimate">
       <StepHeading eyebrow="Preliminary estimate" title="A range you can plan around." description="Built from your actual room devices. A site survey confirms wiring, brands and final quantities." />
+      
+      {showSoftLead && (
+        <div className="soft-lead-capture">
+          <div className="soft-lead-capture__content">
+            <button type="button" className="soft-lead-capture__close" onClick={() => setShowSoftLead(false)} aria-label="Dismiss"><X /></button>
+            <h3>Get this estimate on WhatsApp</h3>
+            <p>We can send this breakdown to your phone so you don&apos;t lose it.</p>
+            <div className="soft-lead-capture__form">
+              <input value={softLeadPhone} onChange={(e) => setSoftLeadPhone(e.target.value.replace(/[^0-9+]/g, ''))} placeholder="10-digit mobile number" inputMode="tel" />
+              <button type="button" onClick={handleSoftLeadSubmit}>Send</button>
+            </div>
+            <small>No spam. Just your smart-home estimate.</small>
+          </div>
+        </div>
+      )}
+
       <div className="estimate-layout">
         <div className="estimate-range-card"><span>Estimated project range</span><strong>{formatCompactCurrency(estimate.rangeLow)} <i>to</i> {formatCompactCurrency(estimate.rangeHigh)}</strong><p>Inclusive of a practical hardware, installation and integration allowance.</p><div><ShieldCheck /> Final quote after site survey</div></div>
         <div className="estimate-breakdown">
@@ -324,6 +362,16 @@ function EstimateStage({ rooms }: { rooms: VisualPlannerRoom[] }) {
           <div><span>Programming & integration</span><strong>{formatCompactCurrency(estimate.integrationLow)} – {formatCompactCurrency(estimate.integrationHigh)}</strong><small>Scenes, app setup, voice and handover</small></div>
         </div>
       </div>
+
+      <div className="estimate-trust-section">
+        <h3>Why plan with Tejum?</h3>
+        <div className="estimate-trust-grid">
+          <div className="trust-item"><Shield /><strong>Expert Installation</strong><p>Trained professionals handling your home&apos;s wiring safely.</p></div>
+          <div className="trust-item"><Award /><strong>3-Year Warranty</strong><p>Comprehensive coverage on all supplied smart hardware.</p></div>
+          <div className="trust-item"><Wrench /><strong>Lifetime Support</strong><p>Dedicated technical assistance whenever you need it.</p></div>
+        </div>
+      </div>
+
       <div className="estimate-note"><IndianRupee /><span><strong>This is not a final invoice.</strong><small>Brand selection, site condition and infrastructure can change the final BOQ.</small></span></div>
     </section>
   );
@@ -381,7 +429,10 @@ export function VisualPlannerApp() {
   const [transitionDirection, setTransitionDirection] = useState<'forward' | 'backward'>('forward');
 
   useEffect(() => {
-    const timeoutId = window.setTimeout(() => setHydrated(true), 0);
+    const timeoutId = window.setTimeout(() => {
+      setHydrated(true);
+      trackPlannerEvent('planner_started');
+    }, 0);
     return () => window.clearTimeout(timeoutId);
   }, []);
 
@@ -455,9 +506,11 @@ export function VisualPlannerApp() {
       const result = await response.json() as { projectId?: string; error?: string };
       if (!response.ok || !result.projectId) throw new Error(result.error || 'Could not save your plan.');
       store.setPersistedProjectId(result.projectId);
+      trackPlannerEvent('plan_submitted', { projectId: result.projectId });
       navigateTo('complete');
-    } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : 'Could not save your plan. Please try again.');
+    } catch (err: unknown) {
+      console.error(err);
+      setSubmitError(err instanceof Error ? err.message : 'Failed to submit plan. Please try again.');
     } finally {
       setSubmitting(false);
     }

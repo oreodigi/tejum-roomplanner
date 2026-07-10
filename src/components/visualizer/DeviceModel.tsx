@@ -57,7 +57,19 @@ function DeviceGeometry({ deviceKey, color }: { deviceKey: string; color: string
   if (deviceKey === 'scene_control') {
     return <group><mesh><boxGeometry args={[0.28, 0.42, 0.07]} /><meshStandardMaterial color="#f0f3ee" roughness={0.3} /></mesh><mesh position={[0, 0.06, -0.04]}><boxGeometry args={[0.12, 0.12, 0.012]} /><meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.35} /></mesh><mesh position={[0, -0.1, -0.04]}><boxGeometry args={[0.12, 0.04, 0.012]} /><meshStandardMaterial color="#8fa09e" /></mesh></group>;
   }
-  return <mesh><boxGeometry args={[0.3, 0.22, 0.1]} /><meshStandardMaterial color="#e7eeeb" roughness={0.35} /></mesh>;
+  if (deviceKey === 'curtain') {
+    return <group><mesh position={[0, 0.1, 0]}><boxGeometry args={[1.2, 0.05, 0.05]} /><meshStandardMaterial color="#ccc" metalness={0.6} /></mesh><mesh position={[0, -0.4, 0]}><boxGeometry args={[1.1, 1, 0.03]} /><meshStandardMaterial color="#e5e0d8" roughness={0.9} transparent opacity={0.8} /></mesh><mesh position={[0, 0.1, 0.03]}><sphereGeometry args={[0.04, 16, 12]} /><meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.5} /></mesh></group>;
+  }
+  if (deviceKey === 'smart_lock') {
+    return <group><mesh><boxGeometry args={[0.1, 0.35, 0.06]} /><meshStandardMaterial color="#222" metalness={0.8} roughness={0.2} /></mesh><mesh position={[0, 0.05, 0.03]}><boxGeometry args={[0.06, 0.06, 0.01]} /><meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.4} /></mesh><mesh position={[0, -0.05, 0.05]} rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[0.015, 0.015, 0.15]} /><meshStandardMaterial color="#888" metalness={0.9} /></mesh></group>;
+  }
+  if (deviceKey === 'smart_plug') {
+    return <group><mesh><boxGeometry args={[0.12, 0.12, 0.06]} /><meshStandardMaterial color="#f3f4ee" roughness={0.4} /></mesh><mesh position={[0, 0, 0.03]}><boxGeometry args={[0.06, 0.06, 0.01]} /><meshStandardMaterial color="#222" /></mesh><mesh position={[0, 0.04, 0.03]}><circleGeometry args={[0.01, 16]} /><meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.6} /></mesh></group>;
+  }
+  if (['gas_leak_sensor', 'water_leak_sensor'].includes(deviceKey)) {
+    return <mesh><cylinderGeometry args={[0.08, 0.09, 0.04, 24]} /><meshStandardMaterial color="#f3f4ee" emissive={color} emissiveIntensity={0.3} /></mesh>;
+  }
+  return <mesh><boxGeometry args={[0.2, 0.2, 0.1]} /><meshStandardMaterial color="#e7eeeb" roughness={0.35} /></mesh>;
 }
 
 export function DeviceModel({ placement, labelLane, roomWidth, roomLength, roomHeight, selected, onSelect, onMove, onDelete, onDragStateChange }: DeviceModelProps) {
@@ -85,6 +97,10 @@ export function DeviceModel({ placement, labelLane, roomWidth, roomLength, roomH
     const margin = 0.14;
     if (placement.placement_type === 'wall') {
       onMove({ x: point.x, y: Math.max(0.2, Math.min(roomHeight - 0.18, point.y)), z: point.z });
+      return;
+    }
+    if (placement.placement_type === 'corner') {
+      onMove({ x: point.x, y: Math.max(0.4, Math.min(roomHeight - 0.2, point.y)), z: point.z });
       return;
     }
     onMove({
@@ -126,11 +142,13 @@ export function DeviceModel({ placement, labelLane, roomWidth, roomLength, roomH
       {placement.coverage && <CoverageCone coverage={placement.coverage} />}
       <Html center position={[0, 0.48, 0]} distanceFactor={6.5} zIndexRange={[30, 0]}>
         <div
-          className={`device-model-label is-lane-${labelLane} ${selected ? 'is-selected' : ''} ${dragging ? 'is-dragging' : ''}`}
+          className={`device-model-label ${selected ? 'is-selected is-full' : 'is-compact'} is-lane-${labelLane} ${dragging ? 'is-dragging' : ''}`}
           style={{ '--device-color': visual.color } as CSSProperties}
+          onPointerEnter={(e) => e.currentTarget.classList.add('is-full')}
+          onPointerLeave={(e) => { if (!selected) e.currentTarget.classList.remove('is-full'); }}
         >
           <span><DeviceIcon deviceKey={placement.device_key} aria-hidden="true" /></span>
-          <strong>{placement.display_name}</strong>
+          <strong className="label-text">{placement.display_name}</strong>
           <button
             type="button"
             className="device-model-label__delete"

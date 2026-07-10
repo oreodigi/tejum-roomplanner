@@ -11,6 +11,7 @@ import { RoomShell } from './RoomShell';
 interface RoomSceneProps {
   room: VisualPlannerRoom;
   selectedPlacementId: string | null;
+  selectedDeviceKey: string | null;
   showCeiling: boolean;
   topView: boolean;
   onSelectPlacement: (placementId: string | null) => void;
@@ -19,17 +20,18 @@ interface RoomSceneProps {
   onDeletePlacement: (placementId: string) => void;
 }
 
-export function RoomScene({ room, selectedPlacementId, showCeiling, topView, onSelectPlacement, onSurfacePlace, onMovePlacement, onDeletePlacement }: RoomSceneProps) {
+export function RoomScene({ room, selectedPlacementId, selectedDeviceKey, showCeiling, topView, onSelectPlacement, onSurfacePlace, onMovePlacement, onDeletePlacement }: RoomSceneProps) {
   const [dragging, setDragging] = useState(false);
   const { width_m: width, length_m: length, height_m: height } = room.layout;
 
   return (
     <>
-      <color attach="background" args={['#10232a']} />
-      <ambientLight intensity={1.45} />
-      <directionalLight position={[4, 7, 5]} intensity={2.2} castShadow />
+      <color attach="background" args={['#1a2d34']} />
+      <ambientLight intensity={0.85} />
+      <hemisphereLight args={['#ffffff', '#b0c4de', 0.7]} />
+      <directionalLight position={[5, 8, 5]} intensity={1.5} castShadow shadow-mapSize={[2048, 2048]} shadow-bias={-0.0005} />
       <group onPointerMissed={() => onSelectPlacement(null)}>
-        <RoomShell width={width} length={length} height={height} showCeiling={showCeiling} onPlace={onSurfacePlace} />
+        <RoomShell width={width} length={length} height={height} showCeiling={showCeiling} selectedDeviceKey={selectedDeviceKey} onPlace={onSurfacePlace} />
         <RoomFurnishings roomType={room.roomType} width={width} length={length} />
         {room.placements.map((placement: DevicePlacement, index) => (
           <DeviceModel
@@ -52,7 +54,7 @@ export function RoomScene({ room, selectedPlacementId, showCeiling, topView, onS
         target={[0, Math.min(1.5, height / 2), 0]}
         minDistance={3}
         maxDistance={14}
-        maxPolarAngle={topView ? 0.2 : Math.PI / 2.02}
+        maxPolarAngle={topView ? 0.05 : Math.PI / 2.02}
         minPolarAngle={topView ? 0 : 0.25}
         enablePan
         enabled={!dragging}
