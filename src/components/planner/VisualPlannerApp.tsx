@@ -37,6 +37,7 @@ import { MobileHeader } from '@/components/mobile/MobileHeader';
 import { MobileProgressHeader } from '@/components/mobile/MobileProgressHeader';
 import { MobileRoomCarousel } from '@/components/mobile/MobileRoomCarousel';
 import { MobileStickyCTA } from '@/components/mobile/MobileStickyCTA';
+import { LiveJourneyDiagram } from '@/components/planner/LiveJourneyDiagram';
 import { DesktopRoomSetup } from '@/components/visualizer/DesktopRoomSetup';
 import { MobileRoomSetup } from '@/components/visualizer/MobileRoomSetup';
 import {
@@ -99,7 +100,7 @@ function useMobileViewport() {
 function StepHeading({ eyebrow, title, description }: { eyebrow: string; title: string; description: string }) {
   return (
     <div className="visual-step-heading">
-      <span>{eyebrow}</span>
+      <span><i />{eyebrow}</span>
       <h1>{title}</h1>
       <p>{description}</p>
     </div>
@@ -156,7 +157,7 @@ function PackageStage() {
               <span className="package-choice__number">0{index + 1}</span>
               <span className="package-choice__icon"><Icon /></span>
               <span className="package-choice__content"><small>{item.eyebrow}</small><strong>{item.title}</strong><em>{item.description}</em></span>
-              <span className="package-choice__check">{selected ? <Check /> : <ArrowRight />}</span>
+              <span className="package-choice__check">{selected ? <Check /> : <span />}</span>
             </button>
           );
         })}
@@ -224,6 +225,7 @@ function RoomMapStage({ onConfigure }: { onConfigure: (roomId: string) => void }
       <div className="room-map-grid">
         {visibleRooms.map((room, index) => (
           <article className="room-map-card" key={room.id}>
+            <div className="room-map-card__blueprint" aria-hidden="true"><span /><span /><span /><i>{room.floorNumber === 0 ? 'G' : room.floorNumber}</i></div>
             <div className="room-map-card__top"><span>{String(index + 1).padStart(2, '0')}</span><div><small>{room.roomType.replaceAll('_', ' ')}</small><input value={room.name} onChange={(event) => renameRoom(room.id, event.target.value)} aria-label="Room name" /></div><div className={`room-completion ${room.completionPct === 100 ? 'is-complete' : ''}`}>{room.completionPct === 100 ? <Check /> : `${room.completionPct}%`}</div></div>
             <div className="room-map-card__recommendation"><WandSparkles /><span><strong>{room.setupTier.replace('_', ' ')}</strong><small>{room.placements.length || (room.roomType.includes('bedroom') ? 5 : 4)} suggested devices</small></span></div>
             <div className="room-map-card__controls">
@@ -327,7 +329,7 @@ function EstimateStage({ rooms }: { rooms: VisualPlannerRoom[] }) {
   );
 }
 
-function ContactStage({ onSubmit, submitting, error }: { onSubmit: () => void; submitting: boolean; error: string | null }) {
+function ContactStage({ onSubmit, onBack, submitting, error }: { onSubmit: () => void; onBack: () => void; submitting: boolean; error: string | null }) {
   const { lead, property, updateLead } = useVisualPlannerStore();
   const intents = [
     { id: 'consultation' as const, label: 'Book consultation', description: 'Discuss the plan with a Tejum expert' },
@@ -339,6 +341,7 @@ function ContactStage({ onSubmit, submitting, error }: { onSubmit: () => void; s
   return (
     <section className="visual-stage visual-stage--contact">
       <StepHeading eyebrow="Bring in a Tejum expert" title="Turn the plan into a real home." description="Share only the essentials. Your room plan and estimate are attached automatically." />
+      <button type="button" className="contact-back" onClick={onBack}><ArrowLeft /> Back to estimate</button>
       <div className="contact-layout">
         <div className="contact-intents">{intents.map((intent) => <button type="button" key={intent.id} className={lead.conversionIntent === intent.id ? 'is-selected' : ''} onClick={() => updateLead({ conversionIntent: intent.id })}><span>{lead.conversionIntent === intent.id ? <Check /> : <ChevronRight />}</span><div><strong>{intent.label}</strong><small>{intent.description}</small></div></button>)}</div>
         <div className="contact-form">
@@ -375,6 +378,7 @@ export function VisualPlannerApp() {
   const [hydrated, setHydrated] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [transitionDirection, setTransitionDirection] = useState<'forward' | 'backward'>('forward');
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => setHydrated(true), 0);
@@ -389,20 +393,31 @@ export function VisualPlannerApp() {
   const packageName = AUTOMATION_PACKAGES.find((item) => item.id === store.automationPackage)?.title ?? 'Guided setup';
   const backStep = BACK_STEP[store.step];
 
+  function navigateTo(nextStep: VisualPlannerStep) {
+    const currentIndex = getStepIndex(store.step);
+    const nextIndex = getStepIndex(nextStep);
+    if (nextStep === 'contact' && !store.lead.city && store.property.city) {
+      store.updateLead({ city: store.property.city });
+    }
+    setTransitionDirection(nextIndex >= currentIndex ? 'forward' : 'backward');
+    store.setStep(nextStep);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   function goBack() {
-    if (backStep) store.setStep(backStep);
+    if (backStep) navigateTo(backStep);
   }
 
   function goNext() {
-    if (store.step === 'package' && store.automationPackage) store.setStep('property');
+    if (store.step === 'package' && store.automationPackage) navigateTo('property');
     else if (store.step === 'property') {
       store.generateRooms();
-      store.setStep('rooms');
+      navigateTo('rooms');
     } else if (store.step === 'rooms') {
       store.setActiveRoom(store.activeRoomId ?? store.rooms[0]?.id ?? null);
-      store.setStep('configure');
-    } else if (store.step === 'review') store.setStep('estimate');
-    else if (store.step === 'estimate') store.setStep('contact');
+      navigateTo('configure');
+    } else if (store.step === 'review') navigateTo('estimate');
+    else if (store.step === 'estimate') navigateTo('contact');
   }
 
   function finishRoom() {
@@ -410,7 +425,7 @@ export function VisualPlannerApp() {
     if (store.activeRoomId) store.markRoomComplete(store.activeRoomId);
     const nextRoom = store.rooms[activeIndex + 1];
     if (nextRoom) store.setActiveRoom(nextRoom.id);
-    else store.setStep('review');
+    else navigateTo('review');
   }
 
   async function submitPlan() {
@@ -440,7 +455,7 @@ export function VisualPlannerApp() {
       const result = await response.json() as { projectId?: string; error?: string };
       if (!response.ok || !result.projectId) throw new Error(result.error || 'Could not save your plan.');
       store.setPersistedProjectId(result.projectId);
-      store.setStep('complete');
+      navigateTo('complete');
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Could not save your plan. Please try again.');
     } finally {
@@ -449,10 +464,10 @@ export function VisualPlannerApp() {
   }
 
   function handleMobileNavigation(destination: 'plan' | 'rooms' | 'estimate' | 'finish') {
-    if (destination === 'plan') store.setStep(store.automationPackage ? 'property' : 'package');
-    if (destination === 'rooms' && store.rooms.length) store.setStep('rooms');
-    if (destination === 'estimate' && allPlacements.length) store.setStep('estimate');
-    if (destination === 'finish' && allPlacements.length) store.setStep('contact');
+    if (destination === 'plan') navigateTo(store.automationPackage ? 'property' : 'package');
+    if (destination === 'rooms' && store.rooms.length) navigateTo('rooms');
+    if (destination === 'estimate' && allPlacements.length) navigateTo('estimate');
+    if (destination === 'finish' && allPlacements.length) navigateTo('contact');
   }
 
   const mobileNavActive = store.step === 'rooms' || store.step === 'configure' ? 'rooms' : store.step === 'estimate' || store.step === 'review' ? 'estimate' : store.step === 'contact' || store.step === 'complete' ? 'finish' : 'plan';
@@ -471,18 +486,25 @@ export function VisualPlannerApp() {
         )}
         <header className="visual-planner__desktop-header">
           <Link href="/" className="visual-brand"><span><Home /></span><div><strong>TEJUM</strong><small>Smart room planner</small></div></Link>
-          {store.step !== 'welcome' && store.step !== 'complete' && <nav>{FLOW_STEPS.map((step, index) => <span key={step.id} className={index === stepIndex ? 'is-active' : index < stepIndex ? 'is-complete' : ''}><i>{index < stepIndex ? <Check /> : index + 1}</i>{step.label}</span>)}</nav>}
+          {store.step !== 'welcome' && store.step !== 'complete' && <div className="visual-header-step"><span>Guided configuration</span><strong>Step {stepIndex + 1} of {FLOW_STEPS.length} · {FLOW_STEPS[stepIndex]?.label}</strong></div>}
           <div className="visual-header-actions">{allPlacements.length > 0 && <span className="live-estimate-chip">Approx. {formatCompactCurrency(estimate.rangeLow)} – {formatCompactCurrency(estimate.rangeHigh)}</span>}<ThemeToggle compact /></div>
         </header>
         <main className="visual-planner__main">
-          {store.step === 'welcome' && <WelcomeStage onStart={() => store.setStep('package')} />}
-          {store.step === 'package' && <PackageStage />}
-          {store.step === 'property' && <PropertyStage />}
-          {store.step === 'rooms' && <RoomMapStage onConfigure={(roomId) => { store.setActiveRoom(roomId); store.setStep('configure'); }} />}
-          {store.step === 'configure' && <ConfigureStage mobile={mobile} onFinishRoom={finishRoom} />}
-          {store.step === 'review' && <ReviewStage rooms={store.rooms} packageName={packageName} />}
-          {store.step === 'estimate' && <EstimateStage rooms={store.rooms} />}
-          {store.step === 'contact' && <ContactStage onSubmit={submitPlan} submitting={submitting} error={submitError} />}
+          {store.step === 'welcome' && <WelcomeStage onStart={() => navigateTo('package')} />}
+          {store.step !== 'welcome' && store.step !== 'complete' && (
+            <div className="guided-configurator">
+              <div className={`guided-configurator__content is-${transitionDirection}`} key={store.step}>
+                {store.step === 'package' && <PackageStage />}
+                {store.step === 'property' && <PropertyStage />}
+                {store.step === 'rooms' && <RoomMapStage onConfigure={(roomId) => { store.setActiveRoom(roomId); navigateTo('configure'); }} />}
+                {store.step === 'configure' && <ConfigureStage mobile={mobile} onFinishRoom={finishRoom} />}
+                {store.step === 'review' && <ReviewStage rooms={store.rooms} packageName={packageName} />}
+                {store.step === 'estimate' && <EstimateStage rooms={store.rooms} />}
+                {store.step === 'contact' && <ContactStage onSubmit={submitPlan} onBack={goBack} submitting={submitting} error={submitError} />}
+              </div>
+              <LiveJourneyDiagram step={store.step} automationPackage={store.automationPackage} property={store.property} rooms={store.rooms} lead={store.lead} onNavigate={navigateTo} />
+            </div>
+          )}
           {store.step === 'complete' && <CompleteStage projectId={store.persistedProjectId} onNewPlan={store.reset} />}
         </main>
         {store.step !== 'welcome' && store.step !== 'complete' && store.step !== 'configure' && store.step !== 'contact' && (
@@ -491,7 +513,7 @@ export function VisualPlannerApp() {
             <div><span>Saved on this device</span><button type="button" className="visual-primary-action" onClick={goNext} disabled={stickyDisabled}>{stickyLabel} <ArrowRight /></button></div>
           </div>
         )}
-        {store.step === 'configure' && <MobileStickyCTA label="Save & next room" onClick={finishRoom} secondaryLabel="Room map" onSecondary={() => store.setStep('rooms')} />}
+        {store.step === 'configure' && <MobileStickyCTA label="Save & next room" onClick={finishRoom} secondaryLabel="Room map" onSecondary={() => navigateTo('rooms')} />}
         {showStickyAction && <MobileStickyCTA label={stickyLabel} onClick={goNext} disabled={stickyDisabled} secondaryLabel={backStep ? 'Back' : undefined} onSecondary={backStep ? goBack : undefined} />}
         {store.step === 'contact' && <MobileStickyCTA label={submitting ? 'Saving your plan…' : 'Send plan to Tejum'} onClick={submitPlan} loading={submitting} secondaryLabel="Back" onSecondary={goBack} />}
         {store.step !== 'welcome' && store.step !== 'complete' && <MobileBottomNav active={mobileNavActive} onNavigate={handleMobileNavigation} />}

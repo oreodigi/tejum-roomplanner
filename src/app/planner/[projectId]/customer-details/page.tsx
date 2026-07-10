@@ -42,7 +42,7 @@ export default function CustomerDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const projectId = params.projectId as string;
-  const { setStep, markStepComplete, markSaved, markSaving, markSaveError } = usePlannerStore();
+  const { setStep, markStepComplete, markSaved, markSaving, markSaveError, customerDraft, setCustomerDraft } = usePlannerStore();
 
   const {
     register,
@@ -52,15 +52,15 @@ export default function CustomerDetailsPage() {
     formState: { errors, isDirty },
   } = useForm<CustomerFormData>({
     defaultValues: {
-      full_name: '',
-      mobile: '',
-      whatsapp: '',
-      email: '',
-      city: '',
-      state: '',
-      pincode: '',
-      preferred_contact: 'whatsapp',
-      relationship: 'homeowner',
+      full_name: customerDraft.full_name ?? '',
+      mobile: customerDraft.mobile ?? '',
+      whatsapp: customerDraft.whatsapp ?? '',
+      email: customerDraft.email ?? '',
+      city: customerDraft.city ?? '',
+      state: customerDraft.state ?? '',
+      pincode: customerDraft.pincode ?? '',
+      preferred_contact: customerDraft.preferred_contact ?? 'whatsapp',
+      relationship: customerDraft.relationship ?? 'homeowner',
     },
   });
 
@@ -97,16 +97,26 @@ export default function CustomerDetailsPage() {
             pincode: customer.pincode || '',
             preferred_contact: customer.preferred_contact || 'whatsapp',
             relationship: customer.relationship || 'homeowner',
+            ...customerDraft,
           });
         }
       }
     }
     loadData();
-  }, [projectId, reset]);
+  }, [projectId, reset, customerDraft]);
 
   // Auto-save with debounce
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastDraftRef = useRef('');
   const watchedValues = useWatch({ control }) as CustomerFormData;
+
+  useEffect(() => {
+    if (!isDirty) return;
+    const serializedDraft = JSON.stringify(watchedValues);
+    if (serializedDraft === lastDraftRef.current) return;
+    lastDraftRef.current = serializedDraft;
+    setCustomerDraft(watchedValues);
+  }, [isDirty, setCustomerDraft, watchedValues]);
 
   const autoSave = useCallback(async (data: CustomerFormData) => {
     markSaving();
@@ -119,7 +129,7 @@ export default function CustomerDetailsPage() {
         .single();
 
       if (project?.customer_id) {
-        await supabase
+        const { error } = await supabase
           .from('customers')
           .update({
             full_name: data.full_name,
@@ -133,6 +143,7 @@ export default function CustomerDetailsPage() {
             relationship: data.relationship || null,
           })
           .eq('id', project.customer_id);
+        if (error) throw error;
       }
       markSaved();
     } catch {

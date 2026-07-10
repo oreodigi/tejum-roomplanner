@@ -263,10 +263,20 @@ export const useVisualPlannerStore = create<VisualPlannerState>()(
       markRoomComplete: (roomId) => set((state) => ({ rooms: state.rooms.map((room) => room.id === roomId ? { ...room, completionPct: 100 } : room) })),
       updateLead: (value) => set((state) => ({ lead: { ...state.lead, ...value } })),
       setPersistedProjectId: (persistedProjectId) => set({ persistedProjectId }),
-      reset: () => set({ step: 'welcome', automationPackage: null, property: initialProperty, rooms: [], activeRoomId: null, lead: initialLead, persistedProjectId: null }),
+      reset: () => set({ step: 'welcome', automationPackage: null, property: { ...initialProperty }, rooms: [], activeRoomId: null, lead: { ...initialLead }, persistedProjectId: null }),
     }),
     {
       name: 'tejum-visual-planner-v1',
+      version: 2,
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<VisualPlannerState>;
+        return {
+          ...currentState,
+          ...persisted,
+          property: { ...initialProperty, ...persisted.property },
+          lead: { ...initialLead, ...persisted.lead },
+        };
+      },
       partialize: (state) => ({
         step: state.step,
         automationPackage: state.automationPackage,
