@@ -11,6 +11,7 @@ import {
   type SetupTier,
 } from '@/lib/constants/visual-planner';
 import { generateRoomsForProperty } from '@/lib/engines/room-generator';
+import { normalizePlacement } from '@/lib/engines/placement-geometry';
 import type { DevicePlacement, PropertyType, RoomLayout, RoomType } from '@/lib/types';
 
 export type VisualPlannerStep = 'welcome' | 'package' | 'property' | 'rooms' | 'configure' | 'review' | 'estimate' | 'contact' | 'complete';
@@ -121,25 +122,46 @@ function createPlacement(deviceKey: string, room: VisualPlannerRoom, index: numb
   const device = getDeviceDefinition(deviceKey);
   const width = room.layout.width_m;
   const length = room.layout.length_m;
-  const row = Math.floor(index / 4);
-  const column = index % 4;
-  const x = -width / 2 + 0.7 + column * Math.max(0.7, (width - 1.4) / 3);
-  const z = -length / 2 + 0.65 + row * 1.1;
-  const y = device.placementType === 'ceiling' ? room.layout.height_m - 0.08 : device.mountingHeightM;
+  let wallId: string | null = null;
+  let position = { x: 0, y: device.mountingHeightM, z: 0 };
 
-  return {
+  if (deviceKey === 'fan') {
+    position = { x: 0, y: room.layout.height_m - 0.08, z: 0 };
+  } else if (device.placementType === 'ceiling') {
+    const side = index % 2 === 0 ? -1 : 1;
+    position = { x: side * Math.min(0.8, width * 0.18), y: room.layout.height_m - 0.08, z: 0 };
+  } else if (device.placementType === 'corner') {
+    position = { x: index % 2 === 0 ? -width / 2 : width / 2, y: device.mountingHeightM, z: -length / 2 };
+  } else if (deviceKey === 'scene_control') {
+    wallId = 'back';
+    position = { x: -width / 2 + 0.38, y: device.mountingHeightM, z: -length / 2 };
+  } else if (deviceKey === 'ac') {
+    wallId = 'right';
+    position = { x: width / 2, y: device.mountingHeightM, z: -length * 0.2 };
+  } else if (deviceKey === 'tv') {
+    wallId = 'right';
+    position = { x: width / 2, y: device.mountingHeightM, z: length * 0.25 };
+  } else if (deviceKey === 'curtain') {
+    wallId = 'back';
+    position = { x: width * 0.28, y: device.mountingHeightM, z: -length / 2 };
+  } else {
+    wallId = 'back';
+    position = { x: -width / 2 + 0.45 + (index % 3) * 0.75, y: device.mountingHeightM, z: -length / 2 };
+  }
+
+  return normalizePlacement({
     id: nanoid(),
     device_key: device.key,
     display_name: device.label,
-    wall_id: device.placementType === 'wall' || device.placementType === 'corner' ? 'back' : null,
-    position: { x, y, z },
+    wall_id: wallId,
+    position,
     rotation: { x: 0, y: 0, z: 0 },
     mounting_height_m: device.mountingHeightM,
     placement_type: device.placementType,
     coverage: device.coverage
       ? { kind: device.coverage, rangeM: device.coverage === 'network' ? 8 : 5, angleDeg: device.coverage === 'network' ? 360 : 90 }
       : null,
-  };
+  }, room.layout);
 }
 
 export const useVisualPlannerStore = create<VisualPlannerState>()(
@@ -229,26 +251,23 @@ export const useVisualPlannerStore = create<VisualPlannerState>()(
         rooms: state.rooms.map((room) => {
           if (room.id !== roomId) return room;
           const placement = createPlacement(deviceKey, room, room.placements.length);
-          const adjustedPosition = position
-            ? {
-                ...position,
-                y: position.y <= 0.11 && placement.placement_type !== 'floor'
-                  ? placement.position.y
-                  : position.y,
-              }
-            : placement.position;
+          const adjustedPosition = position ?? placement.position;
+          const normalized = normalizePlacement({ ...placement, position: adjustedPosition, wall_id: wallId ?? placement.wall_id }, room.layout);
           return {
             ...room,
             placements: [...room.placements, {
-              ...placement,
-              position: adjustedPosition,
-              wall_id: wallId ?? placement.wall_id,
+              ...normalized,
             }],
           };
         }),
       })),
       updatePlacement: (roomId, placementId, updates) => set((state) => ({
-        rooms: state.rooms.map((room) => room.id === roomId ? { ...room, placements: room.placements.map((placement) => placement.id === placementId ? { ...placement, ...updates } : placement) } : room),
+        rooms: state.rooms.map((room) => room.id === roomId ? {
+          ...room,
+          placements: room.placements.map((placement) => placement.id === placementId
+            ? normalizePlacement({ ...placement, ...updates, position: { ...placement.position, ...(updates.position ?? {}) } }, room.layout)
+            : placement),
+        } : room),
       })),
       deletePlacement: (roomId, placementId) => set((state) => ({
         rooms: state.rooms.map((room) => room.id === roomId ? { ...room, placements: room.placements.filter((placement) => placement.id !== placementId) } : room),

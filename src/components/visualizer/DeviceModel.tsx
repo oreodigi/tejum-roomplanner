@@ -1,6 +1,6 @@
 'use client';
 
-import { Float, Html } from '@react-three/drei';
+import { Html } from '@react-three/drei';
 import type { ThreeEvent } from '@react-three/fiber';
 import { X } from 'lucide-react';
 import { useMemo, useState, type CSSProperties } from 'react';
@@ -14,6 +14,7 @@ interface DeviceModelProps {
   labelLane: number;
   roomWidth: number;
   roomLength: number;
+  roomHeight: number;
   selected: boolean;
   onSelect: () => void;
   onMove: (position: DevicePlacement['position']) => void;
@@ -25,30 +26,50 @@ function DeviceGeometry({ deviceKey, color }: { deviceKey: string; color: string
   if (deviceKey === 'fan') {
     return (
       <group>
-        <mesh><cylinderGeometry args={[0.13, 0.13, 0.12, 20]} /><meshStandardMaterial color={color} /></mesh>
-        {[0, 1, 2].map((blade) => (
-          <mesh key={blade} rotation={[0, (Math.PI * 2 * blade) / 3, 0]} position={[0.45 * Math.sin((Math.PI * 2 * blade) / 3), 0, 0.45 * Math.cos((Math.PI * 2 * blade) / 3)]}>
-            <boxGeometry args={[0.12, 0.035, 0.72]} /><meshStandardMaterial color={color} roughness={0.34} />
+        <mesh position={[0, -0.12, 0]}><cylinderGeometry args={[0.04, 0.04, 0.28, 16]} /><meshStandardMaterial color="#879598" metalness={0.75} roughness={0.28} /></mesh>
+        <mesh><cylinderGeometry args={[0.14, 0.14, 0.08, 24]} /><meshStandardMaterial color={color} metalness={0.2} roughness={0.32} /></mesh>
+        {[0, 1, 2, 3].map((blade) => (
+          <mesh key={blade} rotation={[0, (Math.PI * 2 * blade) / 4, 0]} position={[0.36 * Math.sin((Math.PI * 2 * blade) / 4), 0, 0.36 * Math.cos((Math.PI * 2 * blade) / 4)]}>
+            <boxGeometry args={[0.11, 0.035, 0.62]} /><meshStandardMaterial color={color} roughness={0.34} />
           </mesh>
         ))}
       </group>
     );
   }
-  if (['main_light', 'ceiling_light', 'smoke_sensor'].includes(deviceKey)) {
-    return <mesh><cylinderGeometry args={[0.18, 0.18, 0.08, 28]} /><meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.42} /></mesh>;
+  if (['main_light', 'ceiling_light'].includes(deviceKey)) {
+    return <group><mesh><cylinderGeometry args={[0.22, 0.22, 0.07, 32]} /><meshStandardMaterial color="#eef3ef" emissive={color} emissiveIntensity={0.5} /></mesh><mesh position={[0, -0.045, 0]}><cylinderGeometry args={[0.17, 0.17, 0.025, 32]} /><meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.8} /></mesh></group>;
+  }
+  if (deviceKey === 'smoke_sensor') {
+    return <mesh><cylinderGeometry args={[0.17, 0.19, 0.06, 28]} /><meshStandardMaterial color="#f3f4ee" emissive={color} emissiveIntensity={0.35} /></mesh>;
+  }
+  if (deviceKey === 'ac') {
+    return <group><mesh><boxGeometry args={[0.95, 0.22, 0.25]} /><meshStandardMaterial color="#e6ece9" roughness={0.35} /></mesh><mesh position={[0, -0.115, 0.02]}><boxGeometry args={[0.76, 0.015, 0.015]} /><meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.25} /></mesh></group>;
+  }
+  if (deviceKey === 'tv') {
+    return <group><mesh><boxGeometry args={[0.9, 0.52, 0.045]} /><meshStandardMaterial color="#151c21" metalness={0.5} roughness={0.22} /></mesh><mesh position={[0, 0, -0.027]}><boxGeometry args={[0.78, 0.41, 0.012]} /><meshStandardMaterial color="#1f8a91" emissive="#0b3e45" emissiveIntensity={0.45} /></mesh></group>;
   }
   if (['cctv', 'video_doorbell', 'motion_sensor'].includes(deviceKey)) {
-    return <mesh><sphereGeometry args={[0.16, 20, 16]} /><meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.2} /></mesh>;
+    return <group><mesh><boxGeometry args={[0.22, 0.14, 0.12]} /><meshStandardMaterial color="#e7eeeb" roughness={0.3} /></mesh><mesh position={[0, -0.005, 0.067]}><sphereGeometry args={[0.055, 16, 12]} /><meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.55} /></mesh></group>;
   }
   if (deviceKey === 'router') {
-    return <mesh><boxGeometry args={[0.48, 0.11, 0.32]} /><meshStandardMaterial color={color} /></mesh>;
+    return <group><mesh><boxGeometry args={[0.48, 0.11, 0.32]} /><meshStandardMaterial color="#e7eeeb" roughness={0.35} /></mesh><mesh position={[0, 0.08, 0]}><boxGeometry args={[0.025, 0.22, 0.025]} /><meshStandardMaterial color={color} /></mesh></group>;
   }
-  return <mesh><boxGeometry args={[0.28, 0.32, 0.09]} /><meshStandardMaterial color={color} /></mesh>;
+  if (deviceKey === 'scene_control') {
+    return <group><mesh><boxGeometry args={[0.28, 0.42, 0.07]} /><meshStandardMaterial color="#f0f3ee" roughness={0.3} /></mesh><mesh position={[0, 0.06, -0.04]}><boxGeometry args={[0.12, 0.12, 0.012]} /><meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.35} /></mesh><mesh position={[0, -0.1, -0.04]}><boxGeometry args={[0.12, 0.04, 0.012]} /><meshStandardMaterial color="#8fa09e" /></mesh></group>;
+  }
+  return <mesh><boxGeometry args={[0.3, 0.22, 0.1]} /><meshStandardMaterial color="#e7eeeb" roughness={0.35} /></mesh>;
 }
 
-export function DeviceModel({ placement, labelLane, roomWidth, roomLength, selected, onSelect, onMove, onDelete, onDragStateChange }: DeviceModelProps) {
+export function DeviceModel({ placement, labelLane, roomWidth, roomLength, roomHeight, selected, onSelect, onMove, onDelete, onDragStateChange }: DeviceModelProps) {
   const [dragging, setDragging] = useState(false);
-  const dragPlane = useMemo(() => new Plane(new Vector3(0, 1, 0), -placement.position.y), [placement.position.y]);
+  const dragPlane = useMemo(() => {
+    if (placement.placement_type === 'wall') {
+      if (placement.wall_id === 'left') return new Plane(new Vector3(1, 0, 0), roomWidth / 2 - 0.14);
+      if (placement.wall_id === 'right') return new Plane(new Vector3(1, 0, 0), -roomWidth / 2 + 0.14);
+      return new Plane(new Vector3(0, 0, 1), roomLength / 2 - 0.14);
+    }
+    return new Plane(new Vector3(0, 1, 0), -placement.position.y);
+  }, [placement.placement_type, placement.wall_id, placement.position.y, roomWidth, roomLength]);
   const visual = getDeviceVisual(placement.device_key);
 
   function setDragState(next: boolean) {
@@ -61,7 +82,11 @@ export function DeviceModel({ placement, labelLane, roomWidth, roomLength, selec
     event.stopPropagation();
     const point = new Vector3();
     if (!event.ray.intersectPlane(dragPlane, point)) return;
-    const margin = 0.16;
+    const margin = 0.14;
+    if (placement.placement_type === 'wall') {
+      onMove({ x: point.x, y: Math.max(0.2, Math.min(roomHeight - 0.18, point.y)), z: point.z });
+      return;
+    }
     onMove({
       x: Math.max(-roomWidth / 2 + margin, Math.min(roomWidth / 2 - margin, point.x)),
       y: placement.position.y,
@@ -97,9 +122,7 @@ export function DeviceModel({ placement, labelLane, roomWidth, roomLength, selec
           <meshBasicMaterial color="#ffce26" wireframe transparent opacity={0.78} />
         </mesh>
       )}
-      <Float speed={1.3 + labelLane * 0.16} rotationIntensity={0.08} floatIntensity={0.06}>
-        <DeviceGeometry deviceKey={placement.device_key} color={visual.color} />
-      </Float>
+      <DeviceGeometry deviceKey={placement.device_key} color={visual.color} />
       {placement.coverage && <CoverageCone coverage={placement.coverage} />}
       <Html center position={[0, 0.48, 0]} distanceFactor={6.5} zIndexRange={[30, 0]}>
         <div

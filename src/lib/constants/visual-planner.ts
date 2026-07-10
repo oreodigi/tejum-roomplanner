@@ -62,7 +62,7 @@ export const DEVICE_CATALOG: DeviceDefinition[] = [
   { key: 'main_light', label: 'Smart light control', shortLabel: 'Light', icon: 'Lightbulb', placementType: 'ceiling', mountingHeightM: 3, priceLow: 1800, priceHigh: 3200 },
   { key: 'ceiling_light', label: 'Dimmable ceiling light', shortLabel: 'Dimmable', icon: 'SunMedium', placementType: 'ceiling', mountingHeightM: 3, priceLow: 2800, priceHigh: 5200 },
   { key: 'fan', label: 'Smart fan control', shortLabel: 'Fan', icon: 'Fan', placementType: 'ceiling', mountingHeightM: 3, priceLow: 3200, priceHigh: 5600 },
-  { key: 'ac', label: 'AC control', shortLabel: 'AC', icon: 'Snowflake', placementType: 'wall', mountingHeightM: 1.4, priceLow: 4500, priceHigh: 7500 },
+  { key: 'ac', label: 'AC control', shortLabel: 'AC', icon: 'Snowflake', placementType: 'wall', mountingHeightM: 2.25, priceLow: 4500, priceHigh: 7500 },
   { key: 'curtain', label: 'Curtain automation', shortLabel: 'Curtain', icon: 'Blinds', placementType: 'wall', mountingHeightM: 2.6, priceLow: 16000, priceHigh: 28000 },
   { key: 'motion_sensor', label: 'Motion sensor', shortLabel: 'Motion', icon: 'ScanLine', placementType: 'corner', mountingHeightM: 2.2, priceLow: 3500, priceHigh: 6500, coverage: 'motion' },
   { key: 'smart_lock', label: 'Smart lock', shortLabel: 'Lock', icon: 'LockKeyhole', placementType: 'wall', mountingHeightM: 1.05, priceLow: 22000, priceHigh: 48000 },

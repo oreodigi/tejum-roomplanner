@@ -38,6 +38,7 @@ export function RoomScene({ room, selectedPlacementId, showCeiling, topView, onS
             labelLane={index % 3}
             roomWidth={width}
             roomLength={length}
+            roomHeight={height}
             selected={placement.id === selectedPlacementId}
             onSelect={() => onSelectPlacement(placement.id)}
             onMove={(position) => onMovePlacement(placement.id, position)}
