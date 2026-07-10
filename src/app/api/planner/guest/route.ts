@@ -4,7 +4,7 @@ import { AUTOMATION_PACKAGES } from '@/lib/constants/visual-planner';
 import { createServiceClient } from '@/lib/supabase/server';
 import { calculateBOQ } from '@/lib/engines/boq/boq-engine';
 import { generateSiteSurveyChecklist } from '@/lib/engines/sales/site-survey';
-import type { PropertyType, ProjectReadiness } from '@/lib/types';
+import type { PropertyType, ProjectReadiness, RoomType } from '@/lib/types';
 
 const vectorSchema = z.object({ x: z.number().finite(), y: z.number().finite(), z: z.number().finite() });
 const placementSchema = z.object({
@@ -27,7 +27,11 @@ const placementSchema = z.object({
 const roomSchema = z.object({
   id: z.string().min(1).max(64),
   name: z.string().trim().min(1).max(100),
-  roomType: z.string().min(1).max(80),
+  roomType: z.enum([
+    'entrance', 'foyer', 'living_room', 'family_lounge', 'dining_room', 'kitchen',
+    'master_bedroom', 'bedroom', 'guest_bedroom', 'bathroom', 'master_bathroom',
+    'balcony', 'passage', 'utility', 'parking', 'home_theatre', 'outdoor', 'custom'
+  ]) as z.ZodType<RoomType>,
   floorNumber: z.number().int().min(0).max(10),
   floorName: z.string().min(1).max(80),
   setupTier: z.enum(['essential', 'comfort', 'premium', 'luxury_ai']),
