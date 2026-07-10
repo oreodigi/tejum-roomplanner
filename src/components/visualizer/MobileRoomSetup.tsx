@@ -54,6 +54,7 @@ export function MobileRoomSetup(props: RoomSetupProps) {
             onSelectPlacement={props.onSelectPlacement}
             onPlace={props.onPlace}
             onMovePlacement={(placementId, position) => props.onUpdatePlacement(placementId, { position })}
+            onDeletePlacement={props.onDeletePlacement}
           />
         )}
       </div>

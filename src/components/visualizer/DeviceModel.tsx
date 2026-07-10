@@ -2,6 +2,7 @@
 
 import { Float, Html } from '@react-three/drei';
 import type { ThreeEvent } from '@react-three/fiber';
+import { X } from 'lucide-react';
 import { useMemo, useState, type CSSProperties } from 'react';
 import { Plane, Vector3 } from 'three';
 import type { DevicePlacement } from '@/lib/types';
@@ -16,6 +17,7 @@ interface DeviceModelProps {
   selected: boolean;
   onSelect: () => void;
   onMove: (position: DevicePlacement['position']) => void;
+  onDelete: () => void;
   onDragStateChange: (dragging: boolean) => void;
 }
 
@@ -44,7 +46,7 @@ function DeviceGeometry({ deviceKey, color }: { deviceKey: string; color: string
   return <mesh><boxGeometry args={[0.28, 0.32, 0.09]} /><meshStandardMaterial color={color} /></mesh>;
 }
 
-export function DeviceModel({ placement, labelLane, roomWidth, roomLength, selected, onSelect, onMove, onDragStateChange }: DeviceModelProps) {
+export function DeviceModel({ placement, labelLane, roomWidth, roomLength, selected, onSelect, onMove, onDelete, onDragStateChange }: DeviceModelProps) {
   const [dragging, setDragging] = useState(false);
   const dragPlane = useMemo(() => new Plane(new Vector3(0, 1, 0), -placement.position.y), [placement.position.y]);
   const visual = getDeviceVisual(placement.device_key);
@@ -83,6 +85,7 @@ export function DeviceModel({ placement, labelLane, roomWidth, roomLength, selec
         (event.target as unknown as { releasePointerCapture: (pointerId: number) => void }).releasePointerCapture(event.pointerId);
         setDragState(false);
       }}
+      onPointerCancel={() => setDragState(false)}
       onClick={(event: ThreeEvent<MouseEvent>) => {
         event.stopPropagation();
         onSelect();
@@ -105,6 +108,18 @@ export function DeviceModel({ placement, labelLane, roomWidth, roomLength, selec
         >
           <span><DeviceIcon deviceKey={placement.device_key} aria-hidden="true" /></span>
           <strong>{placement.display_name}</strong>
+          <button
+            type="button"
+            className="device-model-label__delete"
+            aria-label={`Remove ${placement.display_name}`}
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.stopPropagation();
+              onDelete();
+            }}
+          >
+            <X aria-hidden="true" />
+          </button>
         </div>
       </Html>
     </group>
