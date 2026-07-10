@@ -69,7 +69,8 @@ export default function LandingPage() {
       )}
       <header className="brand-header">
         <Link href="/" className="brand-header__logo" aria-label="TEJUM home">
-          <Image src={`${ASSET_ROOT}/images/tejum-logo.png`} alt="TEJUM - Where your home meets its spark" width={400} height={170} priority />
+          <Image src={`${ASSET_ROOT}/images/tejum-logo-dark.png`} alt="TEJUM - Where your home meets its spark" width={400} height={170} className="dark:hidden" priority />
+          <Image src={`${ASSET_ROOT}/images/tejum-logo-light.png`} alt="TEJUM - Where your home meets its spark" width={400} height={170} className="hidden dark:block" priority />
         </Link>
         <nav className={menuOpen ? 'is-open' : ''} aria-label="Primary navigation">
           <a href="#experience" onClick={() => setMenuOpen(false)}>Experience</a>
@@ -232,7 +233,8 @@ export default function LandingPage() {
       </main>
 
       <footer className="brand-footer brand-shell">
-        <Image src={`${ASSET_ROOT}/images/tejum-logo.png`} alt="TEJUM" width={400} height={170} />
+        <Image src={`${ASSET_ROOT}/images/tejum-logo-dark.png`} alt="TEJUM" width={400} height={170} className="dark:hidden" />
+        <Image src={`${ASSET_ROOT}/images/tejum-logo-light.png`} alt="TEJUM" width={400} height={170} className="hidden dark:block" />
         <p>Where your home meets its spark.</p>
         <span>© {new Date().getFullYear()} TEJUM. All rights reserved.</span>
       </footer>

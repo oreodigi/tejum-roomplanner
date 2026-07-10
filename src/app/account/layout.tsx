@@ -55,7 +55,8 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
       {/* Mobile Header */}
       <header className="md:hidden sticky top-0 z-40 bg-bg-tertiary border-b border-border-color flex items-center justify-between px-4 h-16 shadow-sm">
         <Link href="/" className="flex items-center gap-2">
-          <Image src="/tejum-landing/images/tejum-logo.png" alt="TEJUM" width={100} height={42} className="h-8 w-auto object-contain" />
+          <Image src="/tejum-landing/images/tejum-logo-dark.png" alt="TEJUM" width={100} height={42} className="h-8 w-auto object-contain dark:hidden" />
+          <Image src="/tejum-landing/images/tejum-logo-light.png" alt="TEJUM" width={100} height={42} className="h-8 w-auto object-contain hidden dark:block" />
         </Link>
         <div className="flex items-center gap-3">
           <button onClick={handleSignOut} className="p-2 text-text-secondary hover:text-error" aria-label="Sign Out">
@@ -71,7 +72,8 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
       <aside className="hidden md:flex fixed inset-y-0 left-0 z-30 bg-bg-tertiary border-r border-border-color flex-col w-64 lg:w-72">
         <div className="h-20 flex items-center px-6 border-b border-border-color">
           <Link href="/" className="flex items-center gap-2">
-            <Image src="/tejum-landing/images/tejum-logo.png" alt="TEJUM" width={120} height={50} className="h-10 w-auto object-contain" />
+            <Image src="/tejum-landing/images/tejum-logo-dark.png" alt="TEJUM" width={120} height={50} className="h-10 w-auto object-contain dark:hidden" />
+            <Image src="/tejum-landing/images/tejum-logo-light.png" alt="TEJUM" width={120} height={50} className="h-10 w-auto object-contain hidden dark:block" />
           </Link>
         </div>
         

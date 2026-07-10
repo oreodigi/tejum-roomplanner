@@ -43,7 +43,8 @@ function LoginForm() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <img src="/tejum-landing/images/tejum-logo.png" alt="Tejum" className="h-10 w-auto" style={{ filter: 'brightness(0) invert(1)' }} />
+            <img src="/tejum-landing/images/tejum-logo-dark.png" alt="Tejum" className="h-10 w-auto dark:hidden" />
+            <img src="/tejum-landing/images/tejum-logo-light.png" alt="Tejum" className="h-10 w-auto hidden dark:block" />
           </Link>
           <h1 className="text-2xl font-bold mb-2">Welcome Back</h1>
           <p className="text-text-secondary text-sm">

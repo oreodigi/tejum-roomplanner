@@ -648,8 +648,9 @@ export function VisualPlannerApp() {
         )}
         <header className="visual-planner__desktop-header">
           <Link href="/" className="visual-brand">
-            <img src="/tejum-landing/images/tejum-logo.png" alt="Tejum" className="h-8 w-auto" style={{ filter: 'brightness(0) invert(1)' }} />
-            <div><strong>TEJUM</strong><small>Smart room planner</small></div>
+            <img src="/tejum-landing/images/tejum-logo-dark.png" alt="Tejum" className="h-8 w-auto dark:hidden" />
+            <img src="/tejum-landing/images/tejum-logo-light.png" alt="Tejum" className="h-8 w-auto hidden dark:block" />
+            <div><small>Smart room planner</small></div>
           </Link>
           {store.step !== 'welcome' && store.step !== 'complete' && <div className="visual-header-step"><span>Guided configuration</span><strong>Step {stepIndex + 1} of {FLOW_STEPS.length} · {FLOW_STEPS[stepIndex]?.label}</strong></div>}
           <div className="visual-header-actions">{allPlacements.length > 0 && <span className="live-estimate-chip">Approx. {formatCompactCurrency(estimate.rangeLow)} – {formatCompactCurrency(estimate.rangeHigh)}</span>}<ThemeToggle compact /></div>
