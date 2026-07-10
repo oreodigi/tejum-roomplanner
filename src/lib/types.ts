@@ -644,3 +644,40 @@ export interface DevicePlacement {
   created_at?: string;
   updated_at?: string;
 }
+
+// ============================================================
+// Phase 2: Project Readiness Types
+// ============================================================
+
+export type ProjectCondition = 'new_construction' | 'under_construction' | 'electrical_ongoing' | 'interior_ongoing' | 'nearly_completed' | 'ready_home' | 'occupied_home' | 'renovation';
+export type AutomationApproach = 'complete_home' | 'essential_rooms' | 'phase_wise' | 'upgrade' | 'need_recommendation';
+export type ElectricalReadiness = 'not_started' | 'switchboards_installed' | 'neutral_available' | 'layout_available';
+export type InteriorReadiness = 'not_started' | 'design_stage' | 'wip' | 'completed' | 'no_designer';
+export type CeilingReadiness = 'all' | 'some' | 'none' | 'not_sure';
+export type NetworkReadiness = 'router_known' | 'multiple_ap' | 'mesh_wifi' | 'need_recommendation' | 'not_sure';
+export type BackupPower = 'inverter' | 'ups' | 'generator' | 'solar' | 'none' | 'not_sure';
+export type FloorPlanStatus = 'upload' | 'later' | 'none';
+
+export interface ProjectReadiness {
+  condition: ProjectCondition | null;
+  automationApproach: AutomationApproach | null;
+  electrical: ElectricalReadiness | null;
+  interior: InteriorReadiness | null;
+  ceiling: CeilingReadiness | null;
+  network: NetworkReadiness | null;
+  backupPower: BackupPower | null;
+  floorPlan: FloorPlanStatus | null;
+}
+
+// ============================================================
+// Phase 5: Automation Scenario Types
+// ============================================================
+
+export interface AutomationScenario {
+  id: string;
+  key: string;
+  name: string;
+  description: string;
+  isEnabled: boolean;
+  includedRooms: string[]; // room IDs
+}

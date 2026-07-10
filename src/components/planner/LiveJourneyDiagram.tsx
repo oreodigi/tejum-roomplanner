@@ -13,6 +13,8 @@ import { AUTOMATION_PACKAGES, VISUAL_PROPERTY_TYPES } from '@/lib/constants/visu
 import { calculateVisualEstimate, formatCompactCurrency } from '@/lib/engines/visual-estimate-engine';
 import type { GuestLeadDraft, GuestPropertyDraft, VisualPlannerRoom, VisualPlannerStep } from '@/lib/stores/visual-planner-store';
 import type { AutomationPackage } from '@/lib/constants/visual-planner';
+import type { ProjectReadiness, AutomationScenario } from '@/lib/types';
+import { useVisualPlannerStore } from '@/lib/stores/visual-planner-store';
 
 const JOURNEY_STEPS: Array<{
   id: Exclude<VisualPlannerStep, 'welcome' | 'complete'>;
@@ -21,8 +23,10 @@ const JOURNEY_STEPS: Array<{
 }> = [
   { id: 'package', label: 'Your priorities', Icon: Sparkles },
   { id: 'property', label: 'Your home', Icon: House },
+  { id: 'readiness', label: 'Readiness', Icon: Check },
   { id: 'rooms', label: 'Room map', Icon: LayoutGrid },
   { id: 'configure', label: 'Room setup', Icon: SlidersHorizontal },
+  { id: 'scenarios', label: 'Experiences', Icon: Sparkles },
   { id: 'review', label: 'Plan check', Icon: Check },
   { id: 'estimate', label: 'Investment', Icon: CircleDollarSign },
   { id: 'contact', label: 'Expert handoff', Icon: MessageCircle },
@@ -43,14 +47,18 @@ function getNodeValue(
   property: GuestPropertyDraft,
   rooms: VisualPlannerRoom[],
   lead: GuestLeadDraft,
+  readiness: ProjectReadiness,
+  scenarios: AutomationScenario[]
 ) {
   const placements = rooms.flatMap((room) => room.placements);
-  const estimate = calculateVisualEstimate(placements, automationPackage);
+  const estimate = calculateVisualEstimate(placements, automationPackage, property, readiness);
 
   if (id === 'package') return AUTOMATION_PACKAGES.find((item) => item.id === automationPackage)?.title ?? 'Choose what matters';
   if (id === 'property') return VISUAL_PROPERTY_TYPES.find((item) => item.id === property.propertyType)?.label ?? 'Describe your property';
+  if (id === 'readiness') return readiness.condition ? 'Status added' : 'Tell us your status';
   if (id === 'rooms') return rooms.length ? `${rooms.length} spaces mapped` : 'Build your room list';
   if (id === 'configure') return placements.length ? `${placements.length} devices placed` : 'Design each room';
+  if (id === 'scenarios') return scenarios.some(s => s.isEnabled) ? `${scenarios.filter(s => s.isEnabled).length} scenarios selected` : 'Choose your experiences';
   if (id === 'review') return rooms.some((room) => room.completionPct > 0) ? 'Coverage ready to review' : 'Check coverage and gaps';
   if (id === 'estimate') return placements.length ? `${formatCompactCurrency(estimate.rangeLow)} - ${formatCompactCurrency(estimate.rangeHigh)}` : 'Updates as you configure';
   return lead.name ? `${lead.name}, ${lead.preferredContact}` : 'Choose the next action';
@@ -59,6 +67,7 @@ function getNodeValue(
 export function LiveJourneyDiagram({ step, automationPackage, property, rooms, lead, onNavigate }: LiveJourneyDiagramProps) {
   const currentIndex = Math.max(0, JOURNEY_STEPS.findIndex((item) => item.id === step));
   const progress = Math.round(((currentIndex + 1) / JOURNEY_STEPS.length) * 100);
+  const store = useVisualPlannerStore();
 
   return (
     <aside className="live-journey" aria-label="Your smart home planning journey">
@@ -84,7 +93,7 @@ export function LiveJourneyDiagram({ step, automationPackage, property, rooms, l
               <li key={id} className={isActive ? 'is-active' : isComplete ? 'is-complete' : ''}>
                 <button type="button" onClick={() => isReachable && onNavigate(id)} disabled={!isReachable} aria-current={isActive ? 'step' : undefined}>
                   <i>{isComplete ? <Check /> : <Icon />}</i>
-                  <span><small>{label}</small><strong>{getNodeValue(id, automationPackage, property, rooms, lead)}</strong></span>
+                  <span><small>{label}</small><strong>{getNodeValue(id, automationPackage, property, rooms, lead, store.readiness, store.scenarios)}</strong></span>
                 </button>
               </li>
             );

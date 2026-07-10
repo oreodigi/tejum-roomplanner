@@ -6,15 +6,15 @@ import { persist } from 'zustand/middleware';
 import {
   getDefaultRoomDimensions,
   getDeviceDefinition,
-  getRecommendedDeviceKeys,
   type AutomationPackage,
   type SetupTier,
 } from '@/lib/constants/visual-planner';
+import { generateRoomRecommendations } from '@/lib/engines/smart-home-advisor/recommendation-scorer';
 import { generateRoomsForProperty } from '@/lib/engines/room-generator';
 import { normalizePlacement } from '@/lib/engines/placement-geometry';
-import type { DevicePlacement, PropertyType, RoomLayout, RoomType } from '@/lib/types';
+import type { DevicePlacement, PropertyType, RoomLayout, RoomType, ProjectReadiness, AutomationScenario } from '@/lib/types';
 
-export type VisualPlannerStep = 'welcome' | 'package' | 'property' | 'rooms' | 'configure' | 'review' | 'estimate' | 'contact' | 'complete';
+export type VisualPlannerStep = 'welcome' | 'package' | 'property' | 'readiness' | 'rooms' | 'configure' | 'scenarios' | 'review' | 'estimate' | 'contact' | 'complete';
 
 export interface GuestPropertyDraft {
   propertyType: PropertyType;
@@ -56,13 +56,17 @@ interface VisualPlannerState {
   step: VisualPlannerStep;
   automationPackage: AutomationPackage | null;
   property: GuestPropertyDraft;
+  readiness: ProjectReadiness;
   rooms: VisualPlannerRoom[];
+  scenarios: AutomationScenario[];
   activeRoomId: string | null;
   lead: GuestLeadDraft;
   persistedProjectId: string | null;
   setStep: (step: VisualPlannerStep) => void;
   setAutomationPackage: (value: AutomationPackage) => void;
   updateProperty: (value: Partial<GuestPropertyDraft>) => void;
+  updateReadiness: (value: Partial<ProjectReadiness>) => void;
+  toggleScenario: (scenarioId: string, isEnabled: boolean) => void;
   generateRooms: () => void;
   addRoom: (roomType?: RoomType) => void;
   renameRoom: (roomId: string, name: string) => void;
@@ -95,6 +99,17 @@ const initialProperty: GuestPropertyDraft = {
   city: '',
   budgetRange: '2.5l_5l',
   timeline: '3_6_months',
+};
+
+const initialReadiness: ProjectReadiness = {
+  condition: null,
+  automationApproach: null,
+  electrical: null,
+  interior: null,
+  ceiling: null,
+  network: null,
+  backupPower: null,
+  floorPlan: null,
 };
 
 const initialLead: GuestLeadDraft = {
@@ -170,7 +185,9 @@ export const useVisualPlannerStore = create<VisualPlannerState>()(
       step: 'welcome',
       automationPackage: null,
       property: initialProperty,
+      readiness: initialReadiness,
       rooms: [],
+      scenarios: [],
       activeRoomId: null,
       lead: initialLead,
       persistedProjectId: null,
@@ -178,6 +195,8 @@ export const useVisualPlannerStore = create<VisualPlannerState>()(
       setStep: (step) => set({ step }),
       setAutomationPackage: (automationPackage) => set({ automationPackage }),
       updateProperty: (value) => set((state) => ({ property: { ...state.property, ...value } })),
+      updateReadiness: (value) => set((state) => ({ readiness: { ...state.readiness, ...value } })),
+      toggleScenario: (scenarioId, isEnabled) => set((state) => ({ scenarios: state.scenarios.map(s => s.id === scenarioId ? { ...s, isEnabled } : s) })),
       generateRooms: () => {
         const { property, rooms } = get();
         const generated = generateRoomsForProperty(
@@ -275,14 +294,22 @@ export const useVisualPlannerStore = create<VisualPlannerState>()(
       applyRecommendedSetup: (roomId) => set((state) => ({
         rooms: state.rooms.map((room) => {
           if (room.id !== roomId) return room;
-          const keys = getRecommendedDeviceKeys(room.roomType, room.setupTier, state.automationPackage);
+          const recs = generateRoomRecommendations({
+            property: state.property,
+            readiness: state.readiness,
+            automationPackage: state.automationPackage,
+            roomType: room.roomType,
+            setupTier: room.setupTier,
+            floorNumber: room.floorNumber,
+          });
+          const keys = recs.flatMap((rec) => Array(rec.quantity).fill(rec.deviceKey));
           return { ...room, placements: keys.map((key, index) => createPlacement(key, room, index)), completionPct: 80 };
         }),
       })),
       markRoomComplete: (roomId) => set((state) => ({ rooms: state.rooms.map((room) => room.id === roomId ? { ...room, completionPct: 100 } : room) })),
       updateLead: (value) => set((state) => ({ lead: { ...state.lead, ...value } })),
       setPersistedProjectId: (persistedProjectId) => set({ persistedProjectId }),
-      reset: () => set({ step: 'welcome', automationPackage: null, property: { ...initialProperty }, rooms: [], activeRoomId: null, lead: { ...initialLead }, persistedProjectId: null }),
+      reset: () => set({ step: 'welcome', automationPackage: null, property: { ...initialProperty }, readiness: { ...initialReadiness }, rooms: [], scenarios: [], activeRoomId: null, lead: { ...initialLead }, persistedProjectId: null }),
     }),
     {
       name: 'tejum-visual-planner-v1',
@@ -293,6 +320,7 @@ export const useVisualPlannerStore = create<VisualPlannerState>()(
           ...currentState,
           ...persisted,
           property: { ...initialProperty, ...persisted.property },
+          readiness: { ...initialReadiness, ...persisted.readiness },
           lead: { ...initialLead, ...persisted.lead },
         };
       },
@@ -300,7 +328,9 @@ export const useVisualPlannerStore = create<VisualPlannerState>()(
         step: state.step,
         automationPackage: state.automationPackage,
         property: state.property,
+        readiness: state.readiness,
         rooms: state.rooms,
+        scenarios: state.scenarios,
         activeRoomId: state.activeRoomId,
         lead: state.lead,
         persistedProjectId: state.persistedProjectId,

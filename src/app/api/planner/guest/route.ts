@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { AUTOMATION_PACKAGES } from '@/lib/constants/visual-planner';
 import { createServiceClient } from '@/lib/supabase/server';
+import { calculateBOQ } from '@/lib/engines/boq/boq-engine';
+import { generateSiteSurveyChecklist } from '@/lib/engines/sales/site-survey';
 
 const vectorSchema = z.object({ x: z.number().finite(), y: z.number().finite(), z: z.number().finite() });
 const placementSchema = z.object({
@@ -75,6 +77,24 @@ const requestSchema = z.object({
     rangeLow: z.number().nonnegative(),
     rangeHigh: z.number().nonnegative(),
   }),
+  readiness: z.object({
+    condition: z.string().nullable().optional(),
+    electrical: z.string().nullable().optional(),
+    interior: z.string().nullable().optional(),
+    automationApproach: z.string().nullable().optional(),
+    backupPower: z.string().nullable().optional(),
+    network: z.string().nullable().optional(),
+  }).optional(),
+  scenarios: z.array(z.object({
+    id: z.string(),
+    isEnabled: z.boolean(),
+    deviceOverrides: z.record(z.string(), z.unknown()).optional(),
+  })).optional(),
+  leadScore: z.object({
+    score: z.number(),
+    tier: z.enum(['hot', 'warm', 'cold']),
+    reasons: z.array(z.string()),
+  }).optional(),
 });
 
 function assertData<T>(data: T | null, error: { message: string } | null, label: string): T {
@@ -108,31 +128,61 @@ export async function POST(request: Request) {
     }).select('id').single();
     customerId = assertData(customerResult.data, customerResult.error, 'customer').id;
 
-    const leadResult = await supabase.from('leads').insert({
+    // 2. Create the Lead
+    const leadData: any = {
       customer_id: customerId,
-      status: body.lead.conversionIntent === 'site_visit' ? 'site_survey_required' : 'requirement_completed',
-      source: 'visual_guest_planner',
-      notes: `Requested: ${body.lead.conversionIntent.replaceAll('_', ' ')}. Timeline: ${body.property.timeline}.`,
-    }).select('id').single();
+      status: 'new',
+      source: 'visual_planner',
+      estimated_value_low: body.estimate.rangeLow,
+      estimated_value_high: body.estimate.rangeHigh,
+      automation_package: packageDefinition?.title ?? 'Custom setup',
+      conversion_intent: body.lead.conversionIntent,
+      metadata: {
+        budget_range: body.property.budgetRange,
+        timeline: body.property.timeline,
+        readiness: body.readiness ?? null,
+      },
+    };
+
+    if (body.leadScore) {
+      leadData.lead_score = body.leadScore.score;
+      leadData.lead_tier = body.leadScore.tier;
+      leadData.metadata.lead_score_reasons = body.leadScore.reasons;
+    }
+
+    const leadResult = await supabase.from('leads').insert(leadData).select('id').single();
     leadId = assertData(leadResult.data, leadResult.error, 'lead').id;
 
+    // 3. Generate internal sales metadata
+    const allPlacements = body.rooms.flatMap(r => r.placements);
+    const propertyParams = body.property;
+    const readinessParams = body.readiness || {}; 
+
+    const boq = calculateBOQ(allPlacements, propertyParams, readinessParams);
+    const siteSurvey = generateSiteSurveyChecklist(propertyParams, readinessParams, body.rooms);
+
+    // 4. Create the Project
     const projectResult = await supabase.from('projects').insert({
       customer_id: customerId,
       lead_id: leadId,
-      created_by: null,
-      name: `${body.lead.name}'s ${body.property.propertyType.replaceAll('_', ' ')} plan`,
-      mode: 'customer',
-      automation_interests: packageDefinition ? [packageDefinition.interest] : ['not_sure'],
-      current_step: 'summary',
-      completion_pct: 100,
-      budget_range: body.property.budgetRange,
-      status: 'submitted',
+      name: `${body.property.city || 'Home'} Smart Setup`,
+      status: 'draft',
+      city: body.property.city || null,
+      property_type: body.property.propertyType,
+      floors: body.property.floors,
+      bedrooms: body.property.bedrooms,
       metadata: {
-        guest_plan: true,
-        automation_package: body.automationPackage,
-        timeline: body.property.timeline,
-        conversion_intent: body.lead.conversionIntent,
+        ...body.property,
+        scenarios: body.scenarios ?? null,
+        boq_items: boq.items,
+        infrastructure_checks: siteSurvey,
       },
+      hardware_estimate_low: body.estimate.hardwareLow,
+      hardware_estimate_high: body.estimate.hardwareHigh,
+      installation_estimate_low: body.estimate.installationLow,
+      installation_estimate_high: body.estimate.installationHigh,
+      integration_estimate_low: body.estimate.integrationLow,
+      integration_estimate_high: body.estimate.integrationHigh,
     }).select('id').single();
     projectId = assertData(projectResult.data, projectResult.error, 'project').id;
 

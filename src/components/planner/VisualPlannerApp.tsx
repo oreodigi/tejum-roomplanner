@@ -16,7 +16,6 @@ import {
   House,
   HousePlus,
   IndianRupee,
-  LayoutGrid,
   Lightbulb,
   Loader2,
   MessageCircle,
@@ -50,7 +49,12 @@ import {
   VISUAL_PROPERTY_TYPES,
   type SetupTier,
 } from '@/lib/constants/visual-planner';
+import { ReadinessStage } from '@/components/planner/ReadinessStage';
+import { ScenarioStage } from '@/components/planner/ScenarioStage';
 import { calculateVisualEstimate, formatCompactCurrency } from '@/lib/engines/visual-estimate-engine';
+import { calculateBOQ } from '@/lib/engines/boq/boq-engine';
+import { validateSmartHomePlan } from '@/lib/engines/validation/plan-validator';
+import { calculateLeadScore } from '@/lib/engines/sales/lead-scorer';
 import {
   useVisualPlannerStore,
   type VisualPlannerRoom,
@@ -64,8 +68,10 @@ const PROPERTY_ICONS = { BedSingle, Building2, House, HousePlus, PanelsTopLeft, 
 const FLOW_STEPS: Array<{ id: VisualPlannerStep; label: string }> = [
   { id: 'package', label: 'Package' },
   { id: 'property', label: 'Property' },
+  { id: 'readiness', label: 'Readiness' },
   { id: 'rooms', label: 'Room map' },
   { id: 'configure', label: 'Room setup' },
+  { id: 'scenarios', label: 'Experiences' },
   { id: 'review', label: 'Review' },
   { id: 'estimate', label: 'Estimate' },
   { id: 'contact', label: 'Consultation' },
@@ -74,9 +80,11 @@ const FLOW_STEPS: Array<{ id: VisualPlannerStep; label: string }> = [
 const BACK_STEP: Partial<Record<VisualPlannerStep, VisualPlannerStep>> = {
   package: 'welcome',
   property: 'package',
-  rooms: 'property',
+  readiness: 'property',
+  rooms: 'readiness',
   configure: 'rooms',
-  review: 'configure',
+  scenarios: 'configure',
+  review: 'scenarios',
   estimate: 'review',
   contact: 'estimate',
 };
@@ -297,33 +305,77 @@ function ConfigureStage({ mobile, onFinishRoom }: { mobile: boolean; onFinishRoo
 }
 
 function ReviewStage({ rooms, packageName }: { rooms: VisualPlannerRoom[]; packageName: string }) {
+  const store = useVisualPlannerStore();
   const placements = rooms.flatMap((room) => room.placements);
   const configured = rooms.filter((room) => room.completionPct === 100 || room.placements.length > 0).length;
-  const securityDevices = placements.filter((placement) => ['smart_lock', 'video_doorbell', 'cctv', 'motion_sensor'].includes(placement.device_key)).length;
-  const unconfigured = rooms.length - configured;
+  
+  const boq = calculateBOQ(placements, store.property, store.readiness);
+  const notices = validateSmartHomePlan(store.property, store.readiness, rooms, store.scenarios, boq);
+  const enabledScenarios = store.scenarios.filter(s => s.isEnabled);
 
   return (
     <section className="visual-stage">
-      <StepHeading eyebrow="Your smart-home plan" title="A clear view before we price it." description="See coverage, gaps and high-impact upgrades without a technical spreadsheet." />
+      <StepHeading eyebrow="Your smart-home plan" title="A clear view before we price it." description="See your personalized system architecture, infrastructure requirements, and any critical notes." />
+      
       <div className="review-hero">
-        <div><span>Plan completion</span><strong>{rooms.length ? Math.round((configured / rooms.length) * 100) : 0}%</strong><p>{configured} of {rooms.length} rooms configured</p></div>
+        <div><span>Plan coverage</span><strong>{rooms.length ? Math.round((configured / rooms.length) * 100) : 0}%</strong><p>{configured} of {rooms.length} rooms configured</p></div>
         <div className="review-hero__ring" style={{ '--review-progress': `${rooms.length ? (configured / rooms.length) * 360 : 0}deg` } as React.CSSProperties}><span>{placements.length}</span><small>devices</small></div>
       </div>
+
+      {notices.length > 0 && (
+        <div className="space-y-4 mb-8">
+          <h3 className="text-xl font-medium text-neutral-900 dark:text-white">Important Notes</h3>
+          {notices.map((notice, i) => (
+            <div key={i} className={`p-4 rounded-xl border ${notice.severity === 'critical' ? 'bg-red-50 border-red-200 text-red-900 dark:bg-red-900/20 dark:border-red-800' : notice.severity === 'warning' ? 'bg-amber-50 border-amber-200 text-amber-900 dark:bg-amber-900/20 dark:border-amber-800' : 'bg-blue-50 border-blue-200 text-blue-900 dark:bg-blue-900/20 dark:border-blue-800'}`}>
+              <div className="flex gap-3">
+                <CircleAlert className="w-5 h-5 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="block font-medium mb-1">{notice.message}</strong>
+                  {notice.resolution && <p className="text-sm opacity-80">{notice.resolution}</p>}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="review-card-grid">
-        <article><Sparkles /><span>Automation package</span><strong>{packageName}</strong><p>Controls, scenes and room routines shaped around your choices.</p></article>
-        <article><LayoutGrid /><span>Room coverage</span><strong>{configured}/{rooms.length} configured</strong><p>{unconfigured > 0 ? `${unconfigured} rooms still need a setup.` : 'Every room has a device plan.'}</p></article>
-        <article><ShieldCheck /><span>Security coverage</span><strong>{securityDevices} safety devices</strong><p>{securityDevices > 0 ? 'Entry and sensor coverage is included.' : 'Add entry or sensor protection before the estimate.'}</p></article>
-        <article><Lightbulb /><span>High-impact upgrade</span><strong>Mood scenes + curtains</strong><p>Premium living spaces benefit most from layered lighting.</p></article>
+        <article>
+          <Sparkles />
+          <span>Core Package</span>
+          <strong>{packageName}</strong>
+          <p>Controls and scenes shaped around your choices.</p>
+        </article>
+        
+        <article>
+          <SlidersHorizontal />
+          <span>Experiences</span>
+          <strong>{enabledScenarios.length} Scenarios</strong>
+          <p>Your selected automated routines like Good Morning or Movie Mode.</p>
+        </article>
+        
+        <article>
+          <ShieldCheck />
+          <span>Infrastructure</span>
+          <strong>{boq.items.filter(i => i.category === 'infrastructure').reduce((acc, i) => acc + i.quantity, 0)} Hubs</strong>
+          <p>Local processing hubs to keep your home running offline.</p>
+        </article>
+        
+        <article>
+          <Lightbulb />
+          <span>Networking</span>
+          <strong>{boq.items.filter(i => i.category === 'networking').reduce((acc, i) => acc + i.quantity, 0)} Nodes</strong>
+          <p>Enterprise-grade mesh WiFi nodes included for stable coverage.</p>
+        </article>
       </div>
-      {unconfigured > 0 && <div className="plan-guidance"><CircleAlert /><span><strong>{unconfigured} rooms are still open.</strong><small>You can estimate now or configure them for a more accurate range.</small></span></div>}
     </section>
   );
 }
 
 function EstimateStage({ rooms }: { rooms: VisualPlannerRoom[] }) {
-  const automationPackage = useVisualPlannerStore((state) => state.automationPackage);
-  const estimate = calculateVisualEstimate(rooms.flatMap((room) => room.placements), automationPackage);
-  const { lead, updateLead } = useVisualPlannerStore();
+  const store = useVisualPlannerStore();
+  const estimate = calculateVisualEstimate(rooms.flatMap((room) => room.placements), store.automationPackage, store.property, store.readiness);
+  const { lead, updateLead } = store;
   const [showSoftLead, setShowSoftLead] = useState(!lead.phone);
   const [softLeadPhone, setSoftLeadPhone] = useState('');
 
@@ -440,7 +492,7 @@ export function VisualPlannerApp() {
 
   const stepIndex = getStepIndex(store.step);
   const allPlacements = store.rooms.flatMap((room) => room.placements);
-  const estimate = calculateVisualEstimate(allPlacements, store.automationPackage);
+  const estimate = calculateVisualEstimate(allPlacements, store.automationPackage, store.property, store.readiness);
   const packageName = AUTOMATION_PACKAGES.find((item) => item.id === store.automationPackage)?.title ?? 'Guided setup';
   const backStep = BACK_STEP[store.step];
 
@@ -461,13 +513,15 @@ export function VisualPlannerApp() {
 
   function goNext() {
     if (store.step === 'package' && store.automationPackage) navigateTo('property');
-    else if (store.step === 'property') {
-      store.generateRooms();
+    else if (store.step === 'property') navigateTo('readiness');
+    else if (store.step === 'readiness') {
+      if (store.rooms.length === 0) store.generateRooms();
       navigateTo('rooms');
     } else if (store.step === 'rooms') {
       store.setActiveRoom(store.activeRoomId ?? store.rooms[0]?.id ?? null);
       navigateTo('configure');
-    } else if (store.step === 'review') navigateTo('estimate');
+    } else if (store.step === 'scenarios') navigateTo('review');
+    else if (store.step === 'review') navigateTo('estimate');
     else if (store.step === 'estimate') navigateTo('contact');
   }
 
@@ -476,7 +530,7 @@ export function VisualPlannerApp() {
     if (store.activeRoomId) store.markRoomComplete(store.activeRoomId);
     const nextRoom = store.rooms[activeIndex + 1];
     if (nextRoom) store.setActiveRoom(nextRoom.id);
-    else navigateTo('review');
+    else navigateTo('scenarios');
   }
 
   async function submitPlan() {
@@ -490,8 +544,12 @@ export function VisualPlannerApp() {
     }
 
     setSubmitting(true);
-    setSubmitError(null);
+    setSubmitError('');
     try {
+      const allPlacements = store.rooms.flatMap((room) => room.placements);
+      const boq = calculateBOQ(allPlacements, store.property, store.readiness);
+      const leadScore = calculateLeadScore(store.property, store.readiness, store.rooms, store.automationPackage, boq);
+
       const response = await fetch('/api/planner/guest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -499,8 +557,11 @@ export function VisualPlannerApp() {
           automationPackage: store.automationPackage,
           property: store.property,
           rooms: store.rooms,
-          lead: { ...store.lead, city: store.lead.city || store.property.city },
-          estimate,
+          lead: store.lead,
+          estimate: calculateVisualEstimate(allPlacements, store.automationPackage, store.property, store.readiness),
+          readiness: store.readiness,
+          scenarios: store.scenarios,
+          leadScore,
         }),
       });
       const result = await response.json() as { projectId?: string; error?: string };
@@ -523,10 +584,10 @@ export function VisualPlannerApp() {
     if (destination === 'finish' && allPlacements.length) navigateTo('contact');
   }
 
-  const mobileNavActive = store.step === 'rooms' || store.step === 'configure' ? 'rooms' : store.step === 'estimate' || store.step === 'review' ? 'estimate' : store.step === 'contact' || store.step === 'complete' ? 'finish' : 'plan';
-  const showStickyAction = ['package', 'property', 'rooms', 'review', 'estimate'].includes(store.step);
-  const stickyLabel = store.step === 'package' ? 'Use this package' : store.step === 'property' ? 'Create my room map' : store.step === 'rooms' ? 'Start room setup' : store.step === 'review' ? 'See estimate' : 'Book expert help';
-  const stickyDisabled = (store.step === 'package' && !store.automationPackage) || (store.step === 'rooms' && !store.rooms.length);
+  const mobileNavActive = store.step === 'rooms' || store.step === 'configure' || store.step === 'scenarios' ? 'rooms' : store.step === 'estimate' || store.step === 'review' ? 'estimate' : store.step === 'contact' || store.step === 'complete' ? 'finish' : 'plan';
+  const showStickyAction = ['package', 'property', 'readiness', 'rooms', 'scenarios', 'review', 'estimate'].includes(store.step);
+  const stickyLabel = store.step === 'package' ? 'Use this package' : store.step === 'property' ? 'Next' : store.step === 'readiness' ? 'Create my room map' : store.step === 'rooms' ? 'Start room setup' : store.step === 'scenarios' ? 'See Review' : store.step === 'review' ? 'See estimate' : 'Book expert help';
+  const stickyDisabled = (store.step === 'package' && !store.automationPackage) || (store.step === 'readiness' && !(store.readiness.condition && store.readiness.electrical && store.readiness.interior)) || (store.step === 'rooms' && !store.rooms.length);
 
   return (
     <MobileAppShell>
@@ -549,8 +610,10 @@ export function VisualPlannerApp() {
               <div className={`guided-configurator__content is-${transitionDirection}`} key={store.step}>
                 {store.step === 'package' && <PackageStage />}
                 {store.step === 'property' && <PropertyStage />}
+                {store.step === 'readiness' && <ReadinessStage />}
                 {store.step === 'rooms' && <RoomMapStage onConfigure={(roomId) => { store.setActiveRoom(roomId); navigateTo('configure'); }} />}
                 {store.step === 'configure' && <ConfigureStage mobile={mobile} onFinishRoom={finishRoom} />}
+                {store.step === 'scenarios' && <ScenarioStage />}
                 {store.step === 'review' && <ReviewStage rooms={store.rooms} packageName={packageName} />}
                 {store.step === 'estimate' && <EstimateStage rooms={store.rooms} />}
                 {store.step === 'contact' && <ContactStage onSubmit={submitPlan} onBack={goBack} submitting={submitting} error={submitError} />}
