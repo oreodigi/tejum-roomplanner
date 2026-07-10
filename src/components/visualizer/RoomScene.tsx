@@ -1,6 +1,7 @@
 'use client';
 
 import { OrbitControls } from '@react-three/drei';
+import { useState } from 'react';
 import type { DevicePlacement, SpatialVector } from '@/lib/types';
 import type { VisualPlannerRoom } from '@/lib/stores/visual-planner-store';
 import { DeviceModel } from './DeviceModel';
@@ -13,9 +14,11 @@ interface RoomSceneProps {
   topView: boolean;
   onSelectPlacement: (placementId: string | null) => void;
   onSurfacePlace: (position: SpatialVector, wallId: string) => void;
+  onMovePlacement: (placementId: string, position: SpatialVector) => void;
 }
 
-export function RoomScene({ room, selectedPlacementId, showCeiling, topView, onSelectPlacement, onSurfacePlace }: RoomSceneProps) {
+export function RoomScene({ room, selectedPlacementId, showCeiling, topView, onSelectPlacement, onSurfacePlace, onMovePlacement }: RoomSceneProps) {
+  const [dragging, setDragging] = useState(false);
   const { width_m: width, length_m: length, height_m: height } = room.layout;
 
   return (
@@ -30,8 +33,12 @@ export function RoomScene({ room, selectedPlacementId, showCeiling, topView, onS
             key={placement.id}
             placement={placement}
             labelLane={index % 3}
+            roomWidth={width}
+            roomLength={length}
             selected={placement.id === selectedPlacementId}
             onSelect={() => onSelectPlacement(placement.id)}
+            onMove={(position) => onMovePlacement(placement.id, position)}
+            onDragStateChange={setDragging}
           />
         ))}
       </group>
@@ -43,6 +50,7 @@ export function RoomScene({ room, selectedPlacementId, showCeiling, topView, onS
         maxPolarAngle={topView ? 0.2 : Math.PI / 2.02}
         minPolarAngle={topView ? 0 : 0.25}
         enablePan
+        enabled={!dragging}
       />
     </>
   );

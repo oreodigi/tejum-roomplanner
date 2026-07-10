@@ -1,9 +1,9 @@
 'use client';
 
-import type { MouseEvent } from 'react';
+import { useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent } from 'react';
 import { getDeviceDefinition } from '@/lib/constants/visual-planner';
 import type { VisualPlannerRoom } from '@/lib/stores/visual-planner-store';
-import { DeviceIcon } from './DeviceIcon';
+import { DeviceIcon, getDeviceVisual } from './DeviceIcon';
 
 interface RoomMiniMapProps {
   room: VisualPlannerRoom;
@@ -11,9 +11,26 @@ interface RoomMiniMapProps {
   selectedPlacementId: string | null;
   onPlace: (position: { x: number; y: number; z: number }) => void;
   onSelectPlacement: (placementId: string | null) => void;
+  onMovePlacement: (placementId: string, position: { x: number; y: number; z: number }) => void;
 }
 
-export function RoomMiniMap({ room, selectedDeviceKey, selectedPlacementId, onPlace, onSelectPlacement }: RoomMiniMapProps) {
+export function RoomMiniMap({ room, selectedDeviceKey, selectedPlacementId, onPlace, onSelectPlacement, onMovePlacement }: RoomMiniMapProps) {
+  const [draggingPlacementId, setDraggingPlacementId] = useState<string | null>(null);
+  const draggingPlacementRef = useRef<string | null>(null);
+  const movedRef = useRef(false);
+
+  function pointerToPosition(event: PointerEvent<SVGGElement>, y: number) {
+    const svg = event.currentTarget.ownerSVGElement;
+    if (!svg) return null;
+    const bounds = svg.getBoundingClientRect();
+    const xRatio = Math.max(0.04, Math.min(0.96, (event.clientX - bounds.left) / bounds.width));
+    const zRatio = Math.max(0.05, Math.min(0.95, (event.clientY - bounds.top) / bounds.height));
+    return {
+      x: (xRatio - 0.5) * room.layout.width_m,
+      y,
+      z: (zRatio - 0.5) * room.layout.length_m,
+    };
+  }
   function handleCanvasClick(event: MouseEvent<SVGSVGElement>) {
     if (!selectedDeviceKey) return;
     const bounds = event.currentTarget.getBoundingClientRect();
@@ -45,13 +62,37 @@ export function RoomMiniMap({ room, selectedDeviceKey, selectedPlacementId, onPl
           const cx = Math.max(62, Math.min(298, pointX));
           const cy = Math.max(30, Math.min(250, pointY + (index % 2 === 0 ? -24 : 24)));
           const device = getDeviceDefinition(placement.device_key);
+          const visual = getDeviceVisual(placement.device_key);
           return (
             <g
               key={placement.id}
-              className={`room-minimap__device ${selectedPlacementId === placement.id ? 'is-selected' : ''}`}
+              className={`room-minimap__device ${selectedPlacementId === placement.id ? 'is-selected' : ''} ${draggingPlacementId === placement.id ? 'is-dragging' : ''}`}
+              style={{ '--device-color': visual.color } as CSSProperties}
+              onPointerDown={(event) => {
+                event.stopPropagation();
+                event.currentTarget.setPointerCapture(event.pointerId);
+                movedRef.current = false;
+                draggingPlacementRef.current = placement.id;
+                setDraggingPlacementId(placement.id);
+                onSelectPlacement(placement.id);
+              }}
+              onPointerMove={(event) => {
+                if (draggingPlacementRef.current !== placement.id) return;
+                event.stopPropagation();
+                const position = pointerToPosition(event, placement.position.y);
+                if (!position) return;
+                movedRef.current = true;
+                onMovePlacement(placement.id, position);
+              }}
+              onPointerUp={(event) => {
+                event.stopPropagation();
+                event.currentTarget.releasePointerCapture(event.pointerId);
+                draggingPlacementRef.current = null;
+                setDraggingPlacementId(null);
+              }}
               onClick={(event) => {
                 event.stopPropagation();
-                onSelectPlacement(placement.id);
+                if (!movedRef.current) onSelectPlacement(placement.id);
               }}
             >
               <line x1={pointX} y1={pointY} x2={cx} y2={cy} />

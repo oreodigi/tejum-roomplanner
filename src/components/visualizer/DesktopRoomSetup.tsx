@@ -33,6 +33,7 @@ export function DesktopRoomSetup(props: RoomSetupProps) {
           topView={topView}
           onSelectPlacement={props.onSelectPlacement}
           onPlace={props.onPlace}
+          onMovePlacement={(placementId, position) => props.onUpdatePlacement(placementId, { position })}
         />
       </section>
       <aside className="desktop-room-setup__panel">

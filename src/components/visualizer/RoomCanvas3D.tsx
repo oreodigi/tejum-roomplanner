@@ -13,9 +13,10 @@ interface RoomCanvas3DProps {
   topView?: boolean;
   onSelectPlacement: (placementId: string | null) => void;
   onPlace: (position: SpatialVector, wallId?: string | null) => void;
+  onMovePlacement: (placementId: string, position: SpatialVector) => void;
 }
 
-export default function RoomCanvas3D({ room, selectedPlacementId, selectedDeviceKey, showCeiling, topView = false, onSelectPlacement, onPlace }: RoomCanvas3DProps) {
+export default function RoomCanvas3D({ room, selectedPlacementId, selectedDeviceKey, showCeiling, topView = false, onSelectPlacement, onPlace, onMovePlacement }: RoomCanvas3DProps) {
   function handleSurfacePlace(position: SpatialVector, wallId: string) {
     if (!selectedDeviceKey) return;
     onPlace(position, wallId);
@@ -36,9 +37,11 @@ export default function RoomCanvas3D({ room, selectedPlacementId, selectedDevice
           topView={topView}
           onSelectPlacement={onSelectPlacement}
           onSurfacePlace={handleSurfacePlace}
+          onMovePlacement={onMovePlacement}
         />
       </Canvas>
       {selectedDeviceKey && <div className="canvas-hint">Tap a wall, ceiling or floor to place</div>}
+      {!selectedDeviceKey && room.placements.length > 0 && <div className="canvas-drag-hint">Drag a device to move it</div>}
     </div>
   );
 }

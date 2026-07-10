@@ -26,6 +26,9 @@ export const metadata: Metadata = {
     'IoT',
     'India',
   ],
+  icons: {
+    icon: '/tejum-landing/images/tejum-favicon.png',
+  },
 };
 
 export default function RootLayout({

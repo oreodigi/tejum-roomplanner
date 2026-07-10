@@ -43,6 +43,7 @@ export function MobileRoomSetup(props: RoomSetupProps) {
             selectedPlacementId={props.selectedPlacementId}
             onPlace={props.onPlace}
             onSelectPlacement={props.onSelectPlacement}
+            onMovePlacement={(placementId, position) => props.onUpdatePlacement(placementId, { position })}
           />
         ) : (
           <RoomCanvas3D
@@ -52,6 +53,7 @@ export function MobileRoomSetup(props: RoomSetupProps) {
             showCeiling={props.showCeiling}
             onSelectPlacement={props.onSelectPlacement}
             onPlace={props.onPlace}
+            onMovePlacement={(placementId, position) => props.onUpdatePlacement(placementId, { position })}
           />
         )}
       </div>
