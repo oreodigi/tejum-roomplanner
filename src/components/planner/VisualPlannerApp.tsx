@@ -492,7 +492,7 @@ export function VisualPlannerApp() {
         <main className="visual-planner__main">
           {store.step === 'welcome' && <WelcomeStage onStart={() => navigateTo('package')} />}
           {store.step !== 'welcome' && store.step !== 'complete' && (
-            <div className="guided-configurator">
+            <div className={`guided-configurator ${store.step === 'configure' ? 'is-room-setup' : ''}`}>
               <div className={`guided-configurator__content is-${transitionDirection}`} key={store.step}>
                 {store.step === 'package' && <PackageStage />}
                 {store.step === 'property' && <PropertyStage />}

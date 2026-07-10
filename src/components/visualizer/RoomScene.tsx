@@ -25,10 +25,11 @@ export function RoomScene({ room, selectedPlacementId, showCeiling, topView, onS
       <directionalLight position={[4, 7, 5]} intensity={2.2} castShadow />
       <group onPointerMissed={() => onSelectPlacement(null)}>
         <RoomShell width={width} length={length} height={height} showCeiling={showCeiling} onPlace={onSurfacePlace} />
-        {room.placements.map((placement: DevicePlacement) => (
+        {room.placements.map((placement: DevicePlacement, index) => (
           <DeviceModel
             key={placement.id}
             placement={placement}
+            labelLane={index % 3}
             selected={placement.id === selectedPlacementId}
             onSelect={() => onSelectPlacement(placement.id)}
           />

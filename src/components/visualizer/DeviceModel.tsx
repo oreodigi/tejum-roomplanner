@@ -1,11 +1,14 @@
 'use client';
 
+import { Html } from '@react-three/drei';
 import type { ThreeEvent } from '@react-three/fiber';
 import type { DevicePlacement } from '@/lib/types';
 import { CoverageCone } from './CoverageCone';
+import { DeviceIcon } from './DeviceIcon';
 
 interface DeviceModelProps {
   placement: DevicePlacement;
+  labelLane: number;
   selected: boolean;
   onSelect: () => void;
 }
@@ -35,7 +38,7 @@ function DeviceGeometry({ deviceKey }: { deviceKey: string }) {
   return <mesh><boxGeometry args={[0.28, 0.32, 0.09]} /><meshStandardMaterial color="#f4efe5" /></mesh>;
 }
 
-export function DeviceModel({ placement, selected, onSelect }: DeviceModelProps) {
+export function DeviceModel({ placement, labelLane, selected, onSelect }: DeviceModelProps) {
   return (
     <group
       position={[placement.position.x, placement.position.y, placement.position.z]}
@@ -53,6 +56,12 @@ export function DeviceModel({ placement, selected, onSelect }: DeviceModelProps)
       )}
       <DeviceGeometry deviceKey={placement.device_key} />
       {placement.coverage && <CoverageCone coverage={placement.coverage} />}
+      <Html center position={[0, 0.48, 0]} distanceFactor={6.5} zIndexRange={[30, 0]}>
+        <div className={`device-model-label is-lane-${labelLane} ${selected ? 'is-selected' : ''}`}>
+          <span><DeviceIcon deviceKey={placement.device_key} aria-hidden="true" /></span>
+          <strong>{placement.display_name}</strong>
+        </div>
+      </Html>
     </group>
   );
 }

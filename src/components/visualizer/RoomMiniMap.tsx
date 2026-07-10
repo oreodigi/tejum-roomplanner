@@ -1,7 +1,9 @@
 'use client';
 
 import type { MouseEvent } from 'react';
+import { getDeviceDefinition } from '@/lib/constants/visual-planner';
 import type { VisualPlannerRoom } from '@/lib/stores/visual-planner-store';
+import { DeviceIcon } from './DeviceIcon';
 
 interface RoomMiniMapProps {
   room: VisualPlannerRoom;
@@ -38,8 +40,11 @@ export function RoomMiniMap({ room, selectedDeviceKey, selectedPlacementId, onPl
         <path d="M 12 94 L 12 150" className="room-minimap__wall" />
         <path d="M 12 150 Q 64 150 64 98" className="room-minimap__door" />
         {room.placements.map((placement, index) => {
-          const cx = 180 + (placement.position.x / room.layout.width_m) * 310;
-          const cy = 140 + (placement.position.z / room.layout.length_m) * 230;
+          const pointX = 180 + (placement.position.x / room.layout.width_m) * 310;
+          const pointY = 140 + (placement.position.z / room.layout.length_m) * 230;
+          const cx = Math.max(62, Math.min(298, pointX));
+          const cy = Math.max(30, Math.min(250, pointY + (index % 2 === 0 ? -24 : 24)));
+          const device = getDeviceDefinition(placement.device_key);
           return (
             <g
               key={placement.id}
@@ -49,8 +54,11 @@ export function RoomMiniMap({ room, selectedDeviceKey, selectedPlacementId, onPl
                 onSelectPlacement(placement.id);
               }}
             >
-              <circle cx={cx} cy={cy} r="15" />
-              <text x={cx} y={cy + 4} textAnchor="middle">{index + 1}</text>
+              <line x1={pointX} y1={pointY} x2={cx} y2={cy} />
+              <circle cx={pointX} cy={pointY} r="4" />
+              <rect x={cx - 52} y={cy - 15} width="104" height="30" rx="9" />
+              <DeviceIcon deviceKey={placement.device_key} x={cx - 43} y={cy - 7} width="14" height="14" aria-hidden="true" />
+              <text x={cx - 23} y={cy + 3}>{device.shortLabel}</text>
             </g>
           );
         })}

@@ -1,9 +1,7 @@
 'use client';
 
-import { BellRing, Blinds, Cctv, CloudAlert, Droplets, Fan, Flame, Lightbulb, LockKeyhole, PanelsTopLeft, PlugZap, Router, ScanLine, Snowflake, Speaker, SunMedium, Tv } from 'lucide-react';
 import { DEVICE_CATALOG } from '@/lib/constants/visual-planner';
-
-const ICONS = { BellRing, Blinds, Cctv, CloudAlert, Droplets, Fan, Flame, Lightbulb, LockKeyhole, PanelsTopLeft, PlugZap, Router, ScanLine, Snowflake, Speaker, SunMedium, Tv };
+import { DeviceIcon } from './DeviceIcon';
 
 interface DevicePaletteProps {
   selectedDeviceKey: string | null;
@@ -15,7 +13,6 @@ export function DevicePalette({ selectedDeviceKey, onSelect, horizontal = false 
   return (
     <div className={`device-palette ${horizontal ? 'is-horizontal' : ''}`}>
       {DEVICE_CATALOG.map((device) => {
-        const Icon = ICONS[device.icon as keyof typeof ICONS] ?? PanelsTopLeft;
         const selected = selectedDeviceKey === device.key;
         return (
           <button
@@ -25,7 +22,7 @@ export function DevicePalette({ selectedDeviceKey, onSelect, horizontal = false 
             onClick={() => onSelect(selected ? null : device.key)}
             aria-pressed={selected}
           >
-            <Icon aria-hidden="true" />
+            <DeviceIcon deviceKey={device.key} aria-hidden="true" />
             <span>{device.shortLabel}</span>
           </button>
         );
