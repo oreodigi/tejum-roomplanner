@@ -35,7 +35,7 @@ export default function PlannerLayout({ children }: { children: React.ReactNode 
           <div className="flex items-center gap-2 sm:gap-3">
             <Link href="/" className="flex items-center gap-2 shrink-0">
               <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center">
-                <Home className="w-3.5 h-3.5 text-bg-primary" />
+                <Home className="w-3.5 h-3.5 text-text-inverse" />
               </div>
               <span className="text-sm font-bold hidden sm:inline text-text-primary">TEJUM</span>
             </Link>

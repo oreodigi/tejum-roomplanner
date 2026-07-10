@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Check } from 'lucide-react';
 import { QuantityStepper } from './QuantityStepper';
 
 interface DeviceToggleCardProps {
@@ -23,40 +24,23 @@ export function DeviceToggleCard({
   showQuantity = true,
 }: DeviceToggleCardProps) {
   return (
-    <div className={`relative w-full rounded-2xl border-2 transition-all duration-300 overflow-hidden flex flex-col ${
-      selected 
-        ? 'border-accent bg-accent-muted/50' 
-        : 'border-glass-border bg-bg-card hover:border-glass-border-hover'
-    }`}>
+    <div className={`device-option ${selected ? 'is-selected' : ''}`}>
       <button
         type="button"
         onClick={onToggle}
-        className="flex-1 p-5 flex flex-col items-center justify-center gap-3 w-full text-center"
+        className="device-option__toggle"
+        aria-pressed={selected}
       >
-        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${
-          selected ? 'bg-accent text-bg-primary' : 'bg-glass text-text-secondary'
-        }`}>
-          {icon}
-        </div>
-        <span className={`font-medium transition-colors ${
-          selected ? 'text-accent' : 'text-text-primary'
-        }`}>
-          {title}
-        </span>
+        <span className="device-option__icon">{icon}</span>
+        <span className="device-option__name">{title}</span>
+        <span className="device-option__state">{selected ? <><Check /> Added</> : 'Add'}</span>
       </button>
-      
-      {/* Quantity Control Area (Only visible when selected and showQuantity is true) */}
-      <div className={`transition-all duration-300 ease-in-out ${
-        selected && showQuantity ? 'h-16 opacity-100 border-t border-accent/20' : 'h-0 opacity-0 overflow-hidden'
-      }`}>
-        <div className="h-full flex items-center justify-center px-4 bg-bg-primary/40">
-          <QuantityStepper 
-            value={quantity} 
-            onChange={(val) => onQuantityChange?.(val)} 
-            min={1} 
-          />
+      {selected && showQuantity && (
+        <div className="device-option__quantity">
+          <span>Quantity</span>
+          <QuantityStepper value={quantity} onChange={(value) => onQuantityChange?.(value)} min={1} />
         </div>
-      </div>
+      )}
     </div>
   );
 }

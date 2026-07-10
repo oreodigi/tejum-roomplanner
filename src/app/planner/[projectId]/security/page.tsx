@@ -36,14 +36,14 @@ const SECURITY_OPTIONS: SecurityOption[] = [
     type: 'cctv_outdoor',
     label: 'Outdoor CCTV Camera',
     desc: 'Weatherproof HD security camera with color night vision and AI human detection.',
-    icon: <Eye className="w-5 h-5 text-indigo-400" />,
+    icon: <Eye className="w-5 h-5 text-info" />,
     category: 'surveillance',
   },
   {
     type: 'cctv_indoor',
     label: 'Indoor CCTV Camera',
     desc: '360° pan-tilt camera with physical privacy shield mode.',
-    icon: <Eye className="w-5 h-5 text-indigo-400" />,
+    icon: <Eye className="w-5 h-5 text-info" />,
     category: 'surveillance',
   },
   // Sensors & Safety
@@ -51,28 +51,28 @@ const SECURITY_OPTIONS: SecurityOption[] = [
     type: 'gas_leak_sensor',
     label: 'Kitchen Gas Leak Sensor',
     desc: 'Detects LPG/CNG leak, sounds built-in siren, and alerts your phone immediately.',
-    icon: <Flame className="w-5 h-5 text-rose-400" />,
+    icon: <Flame className="w-5 h-5 text-error" />,
     category: 'safety',
   },
   {
     type: 'smoke_sensor',
     label: 'Smoke Detector',
     desc: 'Photoelectric sensor to detect smoke early and trigger alarms.',
-    icon: <Cloud className="w-5 h-5 text-rose-400" />,
+    icon: <Cloud className="w-5 h-5 text-error" />,
     category: 'safety',
   },
   {
     type: 'water_leak_sensor',
     label: 'Water Flood Sensor',
     desc: 'Placed near washing machines or bathroom drains to detect water leaks early.',
-    icon: <Droplets className="w-5 h-5 text-cyan-400" />,
+    icon: <Droplets className="w-5 h-5 text-info" />,
     category: 'safety',
   },
   {
     type: 'door_sensor',
     label: 'Door/Window Intrusion Sensor',
     desc: 'Triggers alarm if doors or windows are opened while security is armed.',
-    icon: <Shield className="w-5 h-5 text-emerald-400" />,
+    icon: <Shield className="w-5 h-5 text-success" />,
     category: 'safety',
   },
 ];
@@ -242,7 +242,7 @@ export default function SmartSecurityPage() {
                             isSelected ? 'border-gold bg-gold' : 'border-glass-border hover:border-glass-border-hover'
                           }`}
                         >
-                          {isSelected && <span className="text-bg-primary text-[10px] font-bold">✓</span>}
+                          {isSelected && <span className="text-text-inverse text-[10px] font-bold">✓</span>}
                         </button>
                       </div>
 

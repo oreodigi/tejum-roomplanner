@@ -214,7 +214,7 @@ export default function AIAutomationPage() {
                   <div className={`w-5.5 h-5.5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all ${
                     isEnabled ? 'border-gold bg-gold' : 'border-glass-border'
                   }`}>
-                    {isEnabled && <span className="text-bg-primary text-[10px] font-bold">✓</span>}
+                    {isEnabled && <span className="text-text-inverse text-[10px] font-bold">✓</span>}
                   </div>
                 </button>
               );

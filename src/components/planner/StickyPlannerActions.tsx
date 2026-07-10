@@ -56,7 +56,7 @@ export function StickyPlannerActions({
               type="button"
               onClick={onNext}
               disabled={isNextDisabled || isNextLoading}
-              className="flex items-center justify-center gap-2 px-8 lg:px-10 py-3 lg:py-4 rounded-xl font-semibold bg-accent text-bg-primary hover:bg-accent-light disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-[0_0_20px_rgba(6,182,212,0.15)] hover:shadow-[0_0_30px_rgba(6,182,212,0.3)]"
+              className="flex items-center justify-center gap-2 px-8 lg:px-10 py-3 lg:py-4 rounded-xl font-semibold bg-accent text-text-inverse hover:bg-accent-light disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isNextLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />

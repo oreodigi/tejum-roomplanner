@@ -217,7 +217,7 @@ export default function RoomsPage() {
             <button
               type="button"
               onClick={handleGenerateRooms}
-              className="flex items-center gap-3 px-8 py-4 bg-accent text-bg-primary rounded-xl font-bold hover:bg-accent-light transition-all shadow-[0_0_20px_rgba(6,182,212,0.15)]"
+              className="flex items-center gap-3 px-8 py-4 bg-accent text-text-inverse rounded-xl font-bold hover:bg-accent-light transition-colors"
             >
               <Sparkles className="w-5 h-5" /> Generate Room Map
             </button>
@@ -371,7 +371,7 @@ function AddRoomModal({
               }
             }}
             disabled={!selectedType || !customName.trim()}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold bg-accent text-bg-primary hover:bg-accent-light disabled:opacity-50 transition-colors"
+            className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold bg-accent text-text-inverse hover:bg-accent-light disabled:opacity-50 transition-colors"
           >
             <Plus className="w-5 h-5" /> Add Room
           </button>

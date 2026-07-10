@@ -334,15 +334,15 @@ export default function InfrastructurePage() {
 
         {/* Risk Assessment Box */}
         {riskFlags.length > 0 && (
-          <div className="glass-card-static p-5 border-rose-500/20 bg-rose-950/10 flex gap-4 animate-fade-in">
-            <ShieldAlert className="w-7 h-7 text-rose-500 shrink-0 mt-0.5" />
+          <div className="glass-card-static p-5 !border-error/25 !bg-error-muted flex gap-4 animate-fade-in">
+            <ShieldAlert className="w-7 h-7 text-error shrink-0 mt-0.5" />
             <div>
-              <h3 className="font-semibold text-rose-400 text-sm sm:text-base">Technical Risks Identified</h3>
+              <h3 className="font-semibold text-error text-sm sm:text-base">Technical Risks Identified</h3>
               <p className="text-xs text-text-secondary mt-1">
                 Our recommendation engine flagged these details that might limit smart device features.
                 Don&apos;t worry — we can resolve these during installation!
               </p>
-              <ul className="list-disc pl-4 text-xs text-rose-300 mt-3 flex flex-col gap-1">
+              <ul className="list-disc pl-4 text-xs text-text-secondary mt-3 flex flex-col gap-1">
                 {riskFlags.includes('no_neutral_wire') && (
                   <li><strong>No Neutral Wire:</strong> Smart switchboards require neutral wires. We will recommend retrofit battery/RF modules or help you add neutrals.</li>
                 )}
@@ -362,10 +362,10 @@ export default function InfrastructurePage() {
 
         {/* No risks box */}
         {riskFlags.length === 0 && (
-          <div className="glass-card-static p-5 border-emerald-500/20 bg-emerald-950/10 flex gap-4 animate-fade-in">
-            <CheckCircle className="w-7 h-7 text-emerald-500 shrink-0 mt-0.5" />
+          <div className="glass-card-static p-5 !border-success/25 !bg-success-muted flex gap-4 animate-fade-in">
+            <CheckCircle className="w-7 h-7 text-success shrink-0 mt-0.5" />
             <div>
-              <h3 className="font-semibold text-emerald-400 text-sm sm:text-base">Technical Readiness: Strong</h3>
+              <h3 className="font-semibold text-success text-sm sm:text-base">Technical Readiness: Strong</h3>
               <p className="text-xs text-text-secondary mt-1">
                 Your property matches all prerequisite conditions for smart automation.
                 We will recommend standard high-performance protocols.

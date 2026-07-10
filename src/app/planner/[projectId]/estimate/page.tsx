@@ -208,7 +208,7 @@ export default function EstimatePage() {
         {/* Guarantees Box */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="glass-card-static p-4 flex gap-3 text-xs leading-relaxed text-text-secondary">
-            <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+            <ShieldCheck className="w-5 h-5 text-success shrink-0 mt-0.5" />
             <div>
               <strong className="text-text-primary block mb-1">Tejum Turnkey Guarantee</strong>
               Includes 12 months comprehensive remote and on-site support, 

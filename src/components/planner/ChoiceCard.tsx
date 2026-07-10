@@ -28,7 +28,7 @@ export function ChoiceCard({
       onClick={onClick}
       className={`group relative w-full text-left p-6 rounded-2xl border-2 transition-all duration-300 overflow-hidden ${
         selected
-          ? 'border-accent bg-accent-muted shadow-[0_0_30px_rgba(6,182,212,0.15)]'
+          ? 'border-accent bg-accent-muted'
           : 'border-glass-border bg-bg-card hover:border-glass-border-hover hover:bg-bg-card-hover'
       }`}
     >
@@ -38,7 +38,7 @@ export function ChoiceCard({
       <div className="relative z-10 flex gap-5 items-start">
         {icon && (
           <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
-            selected ? 'bg-accent text-bg-primary' : 'bg-glass text-accent group-hover:bg-glass-border'
+            selected ? 'bg-accent text-text-inverse' : 'bg-glass text-accent group-hover:bg-glass-border'
           }`}>
             {icon}
           </div>
@@ -70,7 +70,7 @@ export function ChoiceCard({
 
         <div className="shrink-0 flex items-center justify-center w-6 h-6 ml-2">
           <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-            selected ? 'border-accent bg-accent text-bg-primary' : 'border-glass-border'
+            selected ? 'border-accent bg-accent text-text-inverse' : 'border-glass-border'
           }`}>
             {selected && <CheckCircle2 className="w-4 h-4" />}
           </div>

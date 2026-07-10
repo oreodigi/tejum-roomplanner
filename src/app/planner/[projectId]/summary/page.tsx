@@ -43,7 +43,7 @@ export default function SummaryPage() {
       setCustomer(cust);
     }
 
-    const { data: surveyData } = await supabase.from('site_surveys').select('*').eq('project_id', projectId).single();
+    const { data: surveyData } = await supabase.from('site_surveys').select('*').eq('project_id', projectId).maybeSingle();
     setSurvey(surveyData);
 
     const { data: roomsData } = await supabase.from('rooms').select('id', { count: 'exact' }).eq('project_id', projectId);
@@ -127,7 +127,7 @@ export default function SummaryPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={() => alert('Proposal PDF generation is preparing...')}
-              className="flex items-center justify-center gap-2 px-6 py-3 bg-accent text-bg-primary rounded-xl font-bold hover:bg-accent-light transition-all shadow-[0_0_20px_rgba(6,182,212,0.15)]"
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-accent text-text-inverse rounded-xl font-bold hover:bg-accent-light transition-colors"
             >
               <Download className="w-5 h-5" /> Download Proposal
             </button>

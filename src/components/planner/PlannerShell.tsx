@@ -14,7 +14,7 @@ export function PlannerShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-bg-primary">
+    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-bg-primary">
       {/* Mobile Top Progress */}
       <div className="lg:hidden sticky top-0 z-50">
         <MobileProgressBar />

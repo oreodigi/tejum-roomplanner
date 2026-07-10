@@ -11,7 +11,7 @@ interface ScenePreset {
   name: string;
   description: string;
   icon: React.ReactNode;
-  gradient: string;
+  tone: string;
   defaultConfig: {
     rooms?: string[];
     brightness?: number;
@@ -24,35 +24,35 @@ const SCENE_PRESETS: ScenePreset[] = [
     name: 'Movie Night',
     description: 'Dimmed ceiling spotlights, warm ambient backlights, and smart curtains closed.',
     icon: <Film className="w-5 h-5" />,
-    gradient: 'from-purple-900/40 to-indigo-900/40 border-purple-500/20 hover:border-purple-500/40 text-purple-400',
+    tone: 'border-info/25 hover:border-info/50 text-info bg-info-muted',
     defaultConfig: { brightness: 20, color_temp: 'Warm' },
   },
   {
     name: 'Good Night',
     description: 'Turns off all common area lights, sets low-level pathway lighting, and locks the doors.',
     icon: <Moon className="w-5 h-5" />,
-    gradient: 'from-blue-900/40 to-slate-900/40 border-blue-500/20 hover:border-blue-500/40 text-blue-400',
+    tone: 'border-accent/25 hover:border-accent/50 text-accent bg-accent-muted',
     defaultConfig: { brightness: 0, color_temp: 'Warm' },
   },
   {
     name: 'Party / Dinner',
     description: 'Warm, cozy chandelier lighting at 60%, side lamps on, and accent wall wash lights on.',
     icon: <PartyPopper className="w-5 h-5" />,
-    gradient: 'from-pink-900/40 to-rose-900/40 border-pink-500/20 hover:border-pink-500/40 text-pink-400',
+    tone: 'border-error/25 hover:border-error/50 text-error bg-error-muted',
     defaultConfig: { brightness: 60, color_temp: 'Warm' },
   },
   {
     name: 'Reading / Work',
     description: 'Bright cool daylight output focused on study desk and reading chairs.',
     icon: <Sun className="w-5 h-5" />,
-    gradient: 'from-amber-900/40 to-yellow-900/40 border-amber-500/20 hover:border-amber-500/40 text-amber-400',
+    tone: 'border-warning/25 hover:border-warning/50 text-warning bg-warning-muted',
     defaultConfig: { brightness: 90, color_temp: 'Cool' },
   },
   {
     name: 'Welcome Home',
     description: 'Foyer and living lights activate automatically to a warm guiding glow when you unlock the door.',
     icon: <Home className="w-5 h-5" />,
-    gradient: 'from-emerald-900/40 to-teal-900/40 border-emerald-500/20 hover:border-emerald-500/40 text-emerald-400',
+    tone: 'border-success/25 hover:border-success/50 text-success bg-success-muted',
     defaultConfig: { brightness: 70, color_temp: 'Warm' },
   },
 ];
@@ -241,7 +241,7 @@ export default function SmartLightingPage() {
                   key={preset.name}
                   type="button"
                   onClick={() => handleTogglePreset(preset)}
-                  className={`selection-card text-left flex gap-4 border bg-gradient-to-br ${preset.gradient} ${
+                  className={`selection-card text-left flex gap-4 border ${preset.tone} ${
                     isEnabled ? 'selected' : ''
                   }`}
                 >
@@ -255,7 +255,7 @@ export default function SmartLightingPage() {
                   <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all ${
                     isEnabled ? 'border-gold bg-gold' : 'border-glass-border'
                   }`}>
-                    {isEnabled && <span className="text-bg-primary text-[10px] font-bold">✓</span>}
+                    {isEnabled && <span className="text-text-inverse text-[10px] font-bold">✓</span>}
                   </div>
                 </button>
               );

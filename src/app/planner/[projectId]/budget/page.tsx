@@ -181,7 +181,7 @@ export default function BudgetPriorityPage() {
                   <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all ${
                     isSelected ? 'border-gold bg-gold' : 'border-glass-border'
                   }`}>
-                    {isSelected && <span className="text-bg-primary text-[10px] font-bold">✓</span>}
+                    {isSelected && <span className="text-text-inverse text-[10px] font-bold">✓</span>}
                   </div>
                 </button>
               );
@@ -216,7 +216,7 @@ export default function BudgetPriorityPage() {
                   <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all ${
                     isSelected ? 'border-gold bg-gold' : 'border-glass-border'
                   }`}>
-                    {isSelected && <span className="text-bg-primary text-[10px] font-bold">✓</span>}
+                    {isSelected && <span className="text-text-inverse text-[10px] font-bold">✓</span>}
                   </div>
                 </button>
               );
@@ -250,7 +250,7 @@ export default function BudgetPriorityPage() {
                   <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all ${
                     isSelected ? 'border-gold bg-gold' : 'border-glass-border'
                   }`}>
-                    {isSelected && <span className="text-bg-primary text-[10px] font-bold">✓</span>}
+                    {isSelected && <span className="text-text-inverse text-[10px] font-bold">✓</span>}
                   </div>
                 </button>
               );

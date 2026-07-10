@@ -26,11 +26,11 @@ export function RoomCard({
 }: RoomCardProps) {
   return (
     <div className={`group relative bg-bg-card border-2 rounded-2xl p-5 transition-all duration-300 ${
-      isActive ? 'border-accent shadow-[0_0_20px_rgba(6,182,212,0.15)]' : 'border-glass-border hover:border-glass-border-hover'
+      isActive ? 'border-accent bg-accent-muted' : 'border-glass-border hover:border-glass-border-hover'
     }`}>
       <div className="flex items-start justify-between mb-4">
         <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
-          isActive ? 'bg-accent text-bg-primary' : 'bg-glass text-accent group-hover:bg-glass-border'
+          isActive ? 'bg-accent text-text-inverse' : 'bg-glass text-accent group-hover:bg-glass-border'
         }`}>
           {icon}
         </div>

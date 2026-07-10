@@ -5,11 +5,63 @@ import { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { usePlannerStore } from '@/lib/stores/planner-store';
 import { getRoomTypeOption, ROOM_DEVICE_DEFAULTS } from '@/lib/constants/room-types';
-import type { Room, ProjectDevice, DeviceType } from '@/lib/types';
-import { ArrowLeft, Lightbulb, AlertTriangle, Monitor, Fan, Video, Speaker, Lock } from 'lucide-react';
+import type { Room, ProjectDevice, DeviceCategory, DeviceType } from '@/lib/types';
+import {
+  ArrowLeft,
+  Lightbulb,
+  AlertTriangle,
+  Monitor,
+  Fan,
+  Video,
+  Speaker,
+  Lock,
+  ChevronDown,
+  SlidersHorizontal,
+  ShieldCheck,
+  PlugZap,
+  Thermometer,
+} from 'lucide-react';
 import { PlannerStep } from '@/components/planner/PlannerStep';
 import { DeviceToggleCard } from '@/components/planner/DeviceToggleCard';
 import { StickyPlannerActions } from '@/components/planner/StickyPlannerActions';
+
+const DEVICE_GROUPS = [
+  {
+    id: 'everyday-controls',
+    title: 'Lighting & everyday controls',
+    description: 'Lights, scenes and the controls you use every day',
+    categoryNames: ['lighting', 'control'],
+    Icon: Lightbulb,
+  },
+  {
+    id: 'comfort-climate',
+    title: 'Comfort & climate',
+    description: 'Cooling, airflow and automated window coverings',
+    categoryNames: ['climate', 'window_covering'],
+    Icon: Thermometer,
+  },
+  {
+    id: 'entertainment',
+    title: 'Entertainment',
+    description: 'Television, audio and home theatre equipment',
+    categoryNames: ['entertainment'],
+    Icon: Monitor,
+  },
+  {
+    id: 'safety-security',
+    title: 'Safety & security',
+    description: 'Access, cameras and early-warning sensors',
+    categoryNames: ['security', 'sensor'],
+    Icon: ShieldCheck,
+  },
+  {
+    id: 'power-infrastructure',
+    title: 'Power & infrastructure',
+    description: 'Smart plugs, appliances and network equipment',
+    categoryNames: ['appliance', 'infrastructure'],
+    Icon: PlugZap,
+  },
+] as const;
 
 export default function RoomConfigPage() {
   const params = useParams();
@@ -22,6 +74,8 @@ export default function RoomConfigPage() {
   const [room, setRoom] = useState<Room | null>(null);
   const [devices, setDevices] = useState<ProjectDevice[]>([]);
   const [deviceTypes, setDeviceTypes] = useState<DeviceType[]>([]);
+  const [deviceCategories, setDeviceCategories] = useState<DeviceCategory[]>([]);
+  const [openGroupIds, setOpenGroupIds] = useState(() => new Set<string>(['everyday-controls']));
 
   const initializeDefaultDevices = useCallback(async (roomType: string, allTypes: DeviceType[]) => {
     const supabase = createClient();
@@ -61,8 +115,12 @@ export default function RoomConfigPage() {
       setRoom(roomData);
       if (!roomData) return;
 
-      const { data: typesData } = await supabase.from('device_types').select('*').eq('is_active', true).order('sort_order');
+      const [{ data: typesData }, { data: categoriesData }] = await Promise.all([
+        supabase.from('device_types').select('*').eq('is_active', true).order('sort_order'),
+        supabase.from('device_categories').select('*').eq('is_active', true).order('sort_order'),
+      ]);
       setDeviceTypes(typesData || []);
+      setDeviceCategories(categoriesData || []);
 
       const { data: projectDevices } = await supabase
         .from('project_devices')
@@ -104,34 +162,33 @@ export default function RoomConfigPage() {
 
   async function handleToggleDevice(deviceType: DeviceType) {
     const existing = devices.find(d => d.device_type_id === deviceType.id);
-    
-    if (existing) {
-      // Remove it
-      markSaving();
-      const supabase = createClient();
-      await supabase.from('project_devices').delete().eq('id', existing.id);
-      setDevices(prev => prev.filter(d => d.id !== existing.id));
-      markSaved();
-    } else {
-      // Add it
-      markSaving();
-      const supabase = createClient();
-      const { data: newDev } = await supabase
-        .from('project_devices')
-        .insert({
-          room_id: roomId,
-          device_type_id: deviceType.id,
-          quantity: 1,
-          smart_automation: true,
-          status: 'customer_confirmed',
-        })
-        .select('*, device_type:device_type_id (*)')
-        .single();
+    markSaving();
+    const supabase = createClient();
 
-      if (newDev) {
-        setDevices(prev => [...prev, newDev]);
+    try {
+      if (existing) {
+        const { error } = await supabase.from('project_devices').delete().eq('id', existing.id);
+        if (error) throw error;
+        setDevices(prev => prev.filter(d => d.id !== existing.id));
+      } else {
+        const { data: newDev, error } = await supabase
+          .from('project_devices')
+          .insert({
+            room_id: roomId,
+            device_type_id: deviceType.id,
+            quantity: 1,
+            smart_automation: true,
+            status: 'customer_confirmed',
+          })
+          .select('*, device_type:device_type_id (*)')
+          .single();
+        if (error) throw error;
+        if (newDev) setDevices(prev => [...prev, newDev]);
       }
       markSaved();
+    } catch (error) {
+      console.error(error);
+      markSaveError();
     }
   }
 
@@ -199,6 +256,15 @@ export default function RoomConfigPage() {
   }
 
   const roomMeta = getRoomTypeOption(room.room_type);
+  const categoryNameById = new Map(deviceCategories.map((category) => [category.id, category.name]));
+  const groupedDeviceTypes = DEVICE_GROUPS.map((group) => ({
+    ...group,
+    devices: deviceTypes
+      .filter((type) => (group.categoryNames as readonly string[]).includes(categoryNameById.get(type.category_id) ?? ''))
+      .sort((a, b) => a.sort_order - b.sort_order),
+  })).filter((group) => group.devices.length > 0);
+  const groupedDeviceIds = new Set(groupedDeviceTypes.flatMap((group) => group.devices.map((type) => type.id)));
+  const otherDevices = deviceTypes.filter((type) => !groupedDeviceIds.has(type.id));
 
   return (
     <PlannerStep>
@@ -224,24 +290,59 @@ export default function RoomConfigPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {deviceTypes.map(type => {
-            const deviceConfig = devices.find(d => d.device_type_id === type.id);
-            const isSelected = !!deviceConfig;
-            
+        <div className="device-accordion-list">
+          {[...groupedDeviceTypes, ...(otherDevices.length ? [{
+            id: 'other',
+            title: 'Other devices',
+            description: 'Additional devices available for this room',
+            categoryNames: [],
+            Icon: SlidersHorizontal,
+            devices: otherDevices,
+          }] : [])].map((group) => {
+            const selectedCount = group.devices.filter((type) => devices.some((device) => device.device_type_id === type.id)).length;
+            const GroupIcon = group.Icon;
+
             return (
-              <DeviceToggleCard
-                key={type.id}
-                title={type.display_name}
-                icon={getDeviceIcon(type.name)}
-                selected={isSelected}
-                quantity={deviceConfig?.quantity || 1}
-                onToggle={() => handleToggleDevice(type)}
-                onQuantityChange={(qty) => {
-                  if (deviceConfig) saveDeviceChange(deviceConfig, { quantity: qty });
+              <details
+                className="device-accordion"
+                key={group.id}
+                open={openGroupIds.has(group.id)}
+                onToggle={(event) => {
+                  const isOpen = event.currentTarget.open;
+                  setOpenGroupIds((current) => {
+                    const next = new Set(current);
+                    if (isOpen) next.add(group.id);
+                    else next.delete(group.id);
+                    return next;
+                  });
                 }}
-                showQuantity={true}
-              />
+              >
+                <summary>
+                  <span className="device-accordion__icon"><GroupIcon /></span>
+                  <span className="device-accordion__title"><strong>{group.title}</strong><small>{group.description}</small></span>
+                  <span className="device-accordion__count">{selectedCount} of {group.devices.length} selected</span>
+                  <ChevronDown className="device-accordion__chevron" />
+                </summary>
+                <div className="device-accordion__content">
+                  {group.devices.map((type) => {
+                    const deviceConfig = devices.find((device) => device.device_type_id === type.id);
+                    return (
+                      <DeviceToggleCard
+                        key={type.id}
+                        title={type.display_name}
+                        icon={getDeviceIcon(type.name)}
+                        selected={Boolean(deviceConfig)}
+                        quantity={deviceConfig?.quantity || 1}
+                        onToggle={() => handleToggleDevice(type)}
+                        onQuantityChange={(quantity) => {
+                          if (deviceConfig) void saveDeviceChange(deviceConfig, { quantity });
+                        }}
+                        showQuantity
+                      />
+                    );
+                  })}
+                </div>
+              </details>
             );
           })}
         </div>
