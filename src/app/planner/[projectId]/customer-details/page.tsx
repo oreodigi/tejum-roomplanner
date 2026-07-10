@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useCallback, useRef } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
 import { usePlannerStore } from '@/lib/stores/planner-store';
 import { INDIAN_STATES } from '@/lib/constants/property-types';
@@ -42,13 +42,13 @@ export default function CustomerDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const projectId = params.projectId as string;
-  const { setStep, markStepComplete, markSaved, markSaving, markSaveError, customerId } = usePlannerStore();
+  const { setStep, markStepComplete, markSaved, markSaving, markSaveError } = usePlannerStore();
 
   const {
     register,
     handleSubmit,
-    watch,
-    setValue,
+    control,
+    reset,
     formState: { errors, isDirty },
   } = useForm<CustomerFormData>({
     defaultValues: {
@@ -87,20 +87,26 @@ export default function CustomerDetailsPage() {
           .single();
 
         if (customer) {
-          Object.entries(customer).forEach(([key, value]) => {
-            if (value && key in ({} as CustomerFormData)) {
-              setValue(key as keyof CustomerFormData, value as string);
-            }
+          reset({
+            full_name: customer.full_name || '',
+            mobile: customer.mobile || '',
+            whatsapp: customer.whatsapp || '',
+            email: customer.email || '',
+            city: customer.city || '',
+            state: customer.state || '',
+            pincode: customer.pincode || '',
+            preferred_contact: customer.preferred_contact || 'whatsapp',
+            relationship: customer.relationship || 'homeowner',
           });
         }
       }
     }
     loadData();
-  }, [projectId, setValue]);
+  }, [projectId, reset]);
 
   // Auto-save with debounce
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const watchedValues = watch();
+  const watchedValues = useWatch({ control }) as CustomerFormData;
 
   const autoSave = useCallback(async (data: CustomerFormData) => {
     markSaving();
@@ -164,8 +170,8 @@ export default function CustomerDetailsPage() {
     router.push(`/planner/${projectId}/automation-interest`);
   }
 
-  const selectedRelationship = watch('relationship');
-  const selectedContact = watch('preferred_contact');
+  const selectedRelationship = watchedValues.relationship;
+  const selectedContact = watchedValues.preferred_contact;
 
   return (
     <div className="animate-fade-in">

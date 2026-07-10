@@ -2,11 +2,11 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useRef, useCallback, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
 import { usePlannerStore } from '@/lib/stores/planner-store';
-import { PROPERTY_TYPES, PROJECT_STATUS_OPTIONS, AUTOMATION_TYPE_OPTIONS } from '@/lib/constants/property-types';
-import { Building2, Layers, Ruler } from 'lucide-react';
+import { PROPERTY_TYPES, PROJECT_STATUS_OPTIONS } from '@/lib/constants/property-types';
+import { Building2, Layers } from 'lucide-react';
 import { PlannerStep } from '@/components/planner/PlannerStep';
 import { ChoiceCard } from '@/components/planner/ChoiceCard';
 import { QuantityStepper } from '@/components/planner/QuantityStepper';
@@ -26,6 +26,23 @@ interface PropertyFormData {
   automation_type: string;
 }
 
+interface QuantityFieldProps {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+  min?: number;
+  max?: number;
+}
+
+function QuantityField({ label, value, onChange, min = 0, max = 20 }: QuantityFieldProps) {
+  return (
+    <div className="flex items-center justify-between py-3 border-b border-glass-border last:border-0">
+      <span className="text-base text-text-primary">{label}</span>
+      <QuantityStepper value={value} onChange={onChange} min={min} max={max} />
+    </div>
+  );
+}
+
 export default function PropertyDetailsPage() {
   const params = useParams();
   const router = useRouter();
@@ -34,8 +51,7 @@ export default function PropertyDetailsPage() {
   const [isSaving, setIsSaving] = useState(false);
 
   const {
-    handleSubmit,
-    watch,
+    control,
     setValue,
     formState: { isDirty },
   } = useForm<PropertyFormData>({
@@ -55,7 +71,8 @@ export default function PropertyDetailsPage() {
   });
 
   const loadedRef = useRef(false);
-  const selectedType = watch('property_type');
+  const watchedValues = useWatch({ control }) as PropertyFormData;
+  const selectedType = watchedValues.property_type;
 
   useEffect(() => {
     setStep('property_details');
@@ -104,8 +121,6 @@ export default function PropertyDetailsPage() {
 
   // Auto-save
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const watchedValues = watch();
-
   const autoSave = useCallback(async (data: PropertyFormData) => {
     if (!data.property_type) return;
     markSaving();
@@ -170,21 +185,6 @@ export default function PropertyDetailsPage() {
     router.push(`/planner/${projectId}/rooms`);
   }
 
-  function QuantityField({ label, name, min = 0, max = 20 }: { label: string; name: keyof PropertyFormData; min?: number; max?: number }) {
-    const value = watch(name) as number;
-    return (
-      <div className="flex items-center justify-between py-3 border-b border-glass-border last:border-0">
-        <span className="text-base text-text-primary">{label}</span>
-        <QuantityStepper
-          value={value || 0}
-          onChange={(val) => setValue(name, val as never, { shouldDirty: true })}
-          min={min}
-          max={max}
-        />
-      </div>
-    );
-  }
-
   return (
     <PlannerStep>
       <div className="mb-10">
@@ -220,12 +220,12 @@ export default function PropertyDetailsPage() {
                 Fine-tune room counts
               </h2>
               <div className="flex flex-col">
-                <QuantityField label="Number of Floors" name="num_floors" min={1} max={10} />
-                <QuantityField label="Bedrooms" name="num_bedrooms" />
-                <QuantityField label="Bathrooms" name="num_bathrooms" />
-                <QuantityField label="Balconies" name="num_balconies" />
-                <QuantityField label="Kitchens" name="num_kitchens" min={1} max={5} />
-                <QuantityField label="Living / Common Areas" name="num_outdoor" />
+                <QuantityField label="Number of Floors" value={watchedValues.num_floors || 0} onChange={(value) => setValue('num_floors', value, { shouldDirty: true })} min={1} max={10} />
+                <QuantityField label="Bedrooms" value={watchedValues.num_bedrooms || 0} onChange={(value) => setValue('num_bedrooms', value, { shouldDirty: true })} />
+                <QuantityField label="Bathrooms" value={watchedValues.num_bathrooms || 0} onChange={(value) => setValue('num_bathrooms', value, { shouldDirty: true })} />
+                <QuantityField label="Balconies" value={watchedValues.num_balconies || 0} onChange={(value) => setValue('num_balconies', value, { shouldDirty: true })} />
+                <QuantityField label="Kitchens" value={watchedValues.num_kitchens || 0} onChange={(value) => setValue('num_kitchens', value, { shouldDirty: true })} min={1} max={5} />
+                <QuantityField label="Living / Common Areas" value={watchedValues.num_outdoor || 0} onChange={(value) => setValue('num_outdoor', value, { shouldDirty: true })} />
               </div>
             </div>
 
@@ -239,7 +239,7 @@ export default function PropertyDetailsPage() {
                   <ChoiceCard
                     key={status.value}
                     title={status.label}
-                    selected={watch('project_status') === status.value}
+                    selected={watchedValues.project_status === status.value}
                     onClick={() => setValue('project_status', status.value, { shouldDirty: true })}
                   />
                 ))}

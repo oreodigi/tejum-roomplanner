@@ -6,8 +6,8 @@ import { createClient } from '@/lib/supabase/client';
 import { usePlannerStore } from '@/lib/stores/planner-store';
 import type { BudgetRange, Priority, ImplementationPreference } from '@/lib/types';
 import {
-  ArrowLeft, ArrowRight, IndianRupee, Sparkles, Scale,
-  Clock, Check, Loader2, HelpCircle
+  ArrowLeft, ArrowRight, IndianRupee, Scale,
+  Clock, Loader2
 } from 'lucide-react';
 
 interface BudgetOption {

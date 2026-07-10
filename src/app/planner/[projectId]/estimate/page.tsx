@@ -7,7 +7,7 @@ import { usePlannerStore } from '@/lib/stores/planner-store';
 import { runEstimationEngine, type EstimateOutput } from '@/lib/engines/estimation-engine';
 import type { ProjectDevice } from '@/lib/types';
 import {
-  ArrowLeft, ArrowRight, IndianRupee, Calculator,
+  ArrowLeft, ArrowRight, Calculator,
   Info, AlertTriangle, ShieldCheck, Loader2
 } from 'lucide-react';
 

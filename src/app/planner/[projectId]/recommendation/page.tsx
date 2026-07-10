@@ -8,7 +8,7 @@ import { runRecommendationEngine, type RecommendationOutput } from '@/lib/engine
 import type { ProjectDevice } from '@/lib/types';
 import {
   ArrowLeft, ArrowRight, Award, ShieldAlert, Cpu,
-  CheckCircle2, AlertCircle, Wrench, Calendar, Info, Loader2
+  CheckCircle2, AlertCircle, Wrench, Calendar, Loader2
 } from 'lucide-react';
 
 export default function RecommendationPage() {

@@ -4,7 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { usePlannerStore } from '@/lib/stores/planner-store';
-import type { Project, Customer, Estimate, BOQItem } from '@/lib/types';
+import type { Customer, Estimate } from '@/lib/types';
 import { ArrowLeft, Printer, Loader2, Send } from 'lucide-react';
 
 interface ProposalContent {
@@ -20,10 +20,8 @@ export default function ProposalBuilderPage() {
   const { markSaved, markSaving, markSaveError } = usePlannerStore();
 
   const [loading, setLoading] = useState(true);
-  const [project, setProject] = useState<Project | null>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [estimate, setEstimate] = useState<Estimate | null>(null);
-  const [boqItems, setBOQItems] = useState<BOQItem[]>([]);
 
   // Proposal State
   const [proposalId, setProposalId] = useState<string | null>(null);
@@ -40,7 +38,6 @@ export default function ProposalBuilderPage() {
 
       // Project
       const { data: proj } = await supabase.from('projects').select('*').eq('id', projectId).single();
-      setProject(proj);
 
       if (proj) {
         // Customer
@@ -51,10 +48,6 @@ export default function ProposalBuilderPage() {
       // Estimate
       const { data: est } = await supabase.from('estimates').select('*').eq('project_id', projectId).single();
       setEstimate(est);
-
-      // BOQ
-      const { data: boq } = await supabase.from('boq_items').select('*').eq('project_id', projectId);
-      setBOQItems(boq || []);
 
       // Proposal (existing)
       const { data: prop } = await supabase

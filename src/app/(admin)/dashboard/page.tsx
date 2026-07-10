@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import type { Lead, SiteSurvey, Project, Estimate } from '@/lib/types';
+import type { SiteSurvey, Project } from '@/lib/types';
 import {
   Users, Calendar, CheckCircle2, IndianRupee,
-  Activity, ArrowUpRight, FolderOpen, Loader2
+  ArrowUpRight, FolderOpen, Loader2
 } from 'lucide-react';
 import Link from 'next/link';
 

@@ -4,14 +4,14 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { usePlannerStore } from '@/lib/stores/planner-store';
-import type { BOQItem, Product, ProjectDevice } from '@/lib/types';
+import type { BOQItem, Product } from '@/lib/types';
 import { ArrowLeft, Trash2, Calculator, Loader2 } from 'lucide-react';
 
 export default function BOQPage() {
   const params = useParams();
   const router = useRouter();
   const projectId = params.projectId as string;
-  const { markSaved, markSaving, markSaveError } = usePlannerStore();
+  const { markSaved, markSaving } = usePlannerStore();
 
   const [loading, setLoading] = useState(true);
   const [compiling, setCompiling] = useState(false);

@@ -2,12 +2,12 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useRef, useCallback, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
 import { usePlannerStore } from '@/lib/stores/planner-store';
 import {
   ArrowLeft, ArrowRight, Wifi, ShieldAlert, CheckCircle,
-  HelpCircle, AlertTriangle, Zap, Server, Loader2
+  Zap, Server, Loader2
 } from 'lucide-react';
 
 interface InfraFormData {
@@ -27,6 +27,40 @@ interface InfraFormData {
   notes: string;
 }
 
+interface YesNoFieldProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}
+
+function YesNoField({ label, value, onChange }: YesNoFieldProps) {
+  return (
+    <div className="flex items-center justify-between py-3 border-b border-glass-border last:border-0">
+      <span className="text-sm flex-1 pr-4">{label}</span>
+      <div className="flex gap-2">
+        {['yes', 'no', ''].map((option) => (
+          <button
+            key={option}
+            type="button"
+            onClick={() => onChange(option)}
+            className={`text-xs px-3 py-1.5 rounded-full transition-all font-medium ${
+              value === option
+                ? option === 'yes'
+                  ? 'bg-success-muted text-success'
+                  : option === 'no'
+                    ? 'bg-error-muted text-error'
+                    : 'bg-glass text-text-muted'
+                : 'bg-glass/50 text-text-muted hover:bg-glass'
+            }`}
+          >
+            {option === 'yes' ? 'Yes' : option === 'no' ? 'No' : 'Skip'}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function InfrastructurePage() {
   const params = useParams();
   const router = useRouter();
@@ -35,14 +69,13 @@ export default function InfrastructurePage() {
 
   const [loading, setLoading] = useState(true);
   const [propertyFloors, setPropertyFloors] = useState(1);
-  const [propertyType, setPropertyType] = useState('');
 
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     setValue,
-    formState: { errors, isDirty },
+    formState: { isDirty },
   } = useForm<InfraFormData>({
     defaultValues: {
       internet_available: '',
@@ -79,13 +112,12 @@ export default function InfrastructurePage() {
       // Get property info for risk calculations
       const { data: prop } = await supabase
         .from('properties')
-        .select('num_floors, property_type')
+        .select('num_floors')
         .eq('project_id', projectId)
         .single();
       
       if (prop) {
         setPropertyFloors(prop.num_floors || 1);
-        setPropertyType(prop.property_type || '');
       }
 
       // Get existing infra check
@@ -117,7 +149,7 @@ export default function InfrastructurePage() {
   }, [projectId, setValue]);
 
   // Compute Risk Flags dynamically
-  const watchedValues = watch();
+  const watchedValues = useWatch({ control }) as InfraFormData;
 
   const getRiskFlags = useCallback((data: InfraFormData): string[] => {
     const flags: string[] = [];
@@ -221,35 +253,6 @@ export default function InfrastructurePage() {
     router.push(`/planner/${projectId}/budget`);
   }
 
-  function YesNoField({ label, name }: { label: string; name: keyof InfraFormData }) {
-    const val = watch(name) as string;
-    return (
-      <div className="flex items-center justify-between py-3 border-b border-glass-border last:border-0">
-        <span className="text-sm flex-1 pr-4">{label}</span>
-        <div className="flex gap-2">
-          {['yes', 'no', ''].map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => setValue(name, option as never, { shouldDirty: true })}
-              className={`text-xs px-3 py-1.5 rounded-full transition-all font-medium ${
-                val === option
-                  ? option === 'yes'
-                    ? 'bg-success-muted text-success'
-                    : option === 'no'
-                    ? 'bg-error-muted text-error'
-                    : 'bg-glass text-text-muted'
-                  : 'bg-glass/50 text-text-muted hover:bg-glass'
-              }`}
-            >
-              {option === 'yes' ? 'Yes' : option === 'no' ? 'No' : 'Skip'}
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-32 gap-3">
@@ -275,9 +278,9 @@ export default function InfrastructurePage() {
             <Wifi className="w-5 h-5 text-gold" />
             Network & WiFi
           </h2>
-          <YesNoField label="Is active internet available at the site?" name="internet_available" />
+          <YesNoField label="Is active internet available at the site?" value={watchedValues.internet_available} onChange={(value) => setValue('internet_available', value, { shouldDirty: true })} />
           
-          {watch('internet_available') === 'yes' && (
+          {watchedValues.internet_available === 'yes' && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 pt-4 border-t border-glass-border/30">
               <div>
                 <label htmlFor="internet_provider" className="input-label">Internet Provider</label>
@@ -298,10 +301,10 @@ export default function InfrastructurePage() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <YesNoField label="Do you use a Mesh WiFi system?" name="mesh_wifi" />
+                <YesNoField label="Do you use a Mesh WiFi system?" value={watchedValues.mesh_wifi} onChange={(value) => setValue('mesh_wifi', value, { shouldDirty: true })} />
               </div>
               <div className="sm:col-span-2">
-                <YesNoField label="Is there a standby/backup internet line?" name="internet_backup" />
+                <YesNoField label="Is there a standby/backup internet line?" value={watchedValues.internet_backup} onChange={(value) => setValue('internet_backup', value, { shouldDirty: true })} />
               </div>
             </div>
           )}
@@ -313,9 +316,9 @@ export default function InfrastructurePage() {
             <Zap className="w-5 h-5 text-gold" />
             Electrical & Wiring
           </h2>
-          <YesNoField label="Do all switchboards have a Neutral wire?" name="neutral_wiring" />
-          <YesNoField label="Is structured Ethernet cabling (Cat6/Cat6A) available?" name="ethernet_cabling" />
-          <YesNoField label="Is there a dedicated Network/IT Rack?" name="network_rack" />
+          <YesNoField label="Do all switchboards have a Neutral wire?" value={watchedValues.neutral_wiring} onChange={(value) => setValue('neutral_wiring', value, { shouldDirty: true })} />
+          <YesNoField label="Is structured Ethernet cabling (Cat6/Cat6A) available?" value={watchedValues.ethernet_cabling} onChange={(value) => setValue('ethernet_cabling', value, { shouldDirty: true })} />
+          <YesNoField label="Is there a dedicated Network/IT Rack?" value={watchedValues.network_rack} onChange={(value) => setValue('network_rack', value, { shouldDirty: true })} />
         </div>
 
         {/* Power Backup */}
@@ -324,9 +327,9 @@ export default function InfrastructurePage() {
             <Server className="w-5 h-5 text-gold" />
             Power Backup
           </h2>
-          <YesNoField label="Is a dedicated UPS available for network devices?" name="ups_available" />
-          <YesNoField label="Is a home power Inverter available?" name="inverter_available" />
-          <YesNoField label="Is a power Generator available?" name="generator_available" />
+          <YesNoField label="Is a dedicated UPS available for network devices?" value={watchedValues.ups_available} onChange={(value) => setValue('ups_available', value, { shouldDirty: true })} />
+          <YesNoField label="Is a home power Inverter available?" value={watchedValues.inverter_available} onChange={(value) => setValue('inverter_available', value, { shouldDirty: true })} />
+          <YesNoField label="Is a power Generator available?" value={watchedValues.generator_available} onChange={(value) => setValue('generator_available', value, { shouldDirty: true })} />
         </div>
 
         {/* Risk Assessment Box */}

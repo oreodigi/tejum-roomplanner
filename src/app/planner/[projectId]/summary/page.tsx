@@ -4,10 +4,10 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { usePlannerStore } from '@/lib/stores/planner-store';
-import type { Customer, Project, SiteSurvey, ProjectDevice } from '@/lib/types';
+import type { Customer, SiteSurvey, ProjectDevice } from '@/lib/types';
 import { 
-  Calendar, CheckCircle2, User, Building2, Lightbulb, 
-  Sparkles, Download, ArrowLeft, Loader2 
+  Calendar, CheckCircle2, User, Lightbulb,
+  Sparkles, Download, ArrowLeft
 } from 'lucide-react';
 import { PlannerStep } from '@/components/planner/PlannerStep';
 import { SmartSummaryCard, SummaryItem } from '@/components/planner/SmartSummaryCard';
@@ -19,7 +19,6 @@ export default function SummaryPage() {
   const { setStep, reset } = usePlannerStore();
 
   const [loading, setLoading] = useState(true);
-  const [project, setProject] = useState<Project | null>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [survey, setSurvey] = useState<SiteSurvey | null>(null);
   const [devices, setDevices] = useState<ProjectDevice[]>([]);
@@ -38,7 +37,6 @@ export default function SummaryPage() {
     const supabase = createClient();
 
     const { data: proj } = await supabase.from('projects').select('*').eq('id', projectId).single();
-    setProject(proj);
 
     if (proj) {
       const { data: cust } = await supabase.from('customers').select('*').eq('id', proj.customer_id).single();
@@ -51,10 +49,6 @@ export default function SummaryPage() {
     const { data: roomsData } = await supabase.from('rooms').select('id', { count: 'exact' }).eq('project_id', projectId);
     setRoomCount(roomsData?.length || 0);
 
-    const { data: devicesData } = await supabase.from('project_devices').select('*').eq('room_id', projectId);
-    
-    // We need to fetch all devices across all rooms for the project. The above line had a bug in the old code or maybe it's just room_id?
-    // Actually we need to join rooms
     const { data: allProjectDevices } = await supabase
       .from('project_devices')
       .select('*, rooms!inner(project_id)')

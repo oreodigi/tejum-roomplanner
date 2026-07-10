@@ -113,6 +113,9 @@ export function runRecommendationEngine(input: RecommendationInput): Recommendat
   if (infrastructure && infrastructure.internet_available === null) {
     missingInfo.push('Internet connection details at site are unverified');
   }
+  if (rooms.length > 0 && switchboards.length === 0) {
+    missingInfo.push('Switchboard mapping has not been completed for any room');
+  }
 
   // 8. Risk Warnings
   const riskWarnings: string[] = [];
