@@ -43,6 +43,7 @@ import { MobileStickyCTA } from '@/components/mobile/MobileStickyCTA';
 import { LiveJourneyDiagram } from '@/components/planner/LiveJourneyDiagram';
 import { DesktopRoomSetup } from '@/components/visualizer/DesktopRoomSetup';
 import { MobileRoomSetup } from '@/components/visualizer/MobileRoomSetup';
+import { SyncManager } from '@/components/planner/SyncManager';
 import {
   AUTOMATION_PACKAGES,
   SETUP_TIERS,
@@ -149,6 +150,47 @@ function WelcomeStage({ onStart }: { onStart: () => void }) {
           <span className="automation-pulse pulse-one" />
           <span className="automation-pulse pulse-two" />
           <div className="room-status-card"><Sparkles /><span><strong>Living room</strong><small>Premium scene ready</small></span></div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ResumeDecisionStage({ onContinue, onStartNew }: { onContinue: () => void, onStartNew: () => void }) {
+  const store = useVisualPlannerStore();
+  
+  const totalRooms = store.rooms.length;
+  const completedRooms = store.rooms.filter(r => r.completionPct === 100).length;
+  const completionPct = totalRooms > 0 ? Math.round((completedRooms / totalRooms) * 100) : 0;
+  
+  const lastUpdated = store.lastUpdatedAt ? new Date(store.lastUpdatedAt).toLocaleDateString('en-IN') : 'Recently';
+  
+  return (
+    <section className="visual-stage" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="glass-card-static p-6 sm:p-8 max-w-md w-full text-center">
+        <h1 className="text-2xl font-bold mb-2">Continue where you left off?</h1>
+        <p className="text-text-secondary text-sm mb-6">You have an unfinished smart-home plan.</p>
+        
+        <div className="bg-bg-tertiary rounded-xl p-4 mb-6 text-left border border-border-color">
+          <div className="flex justify-between mb-2">
+            <span className="text-sm font-semibold text-text-primary">Draft Plan</span>
+            <span className="text-sm text-text-secondary">{lastUpdated}</span>
+          </div>
+          <div className="text-sm text-text-secondary mb-3">
+            {store.property.propertyType.toUpperCase()} • {store.rooms.length} Rooms
+          </div>
+          <div className="progress-bar !h-1.5 mb-1.5">
+            <div className="progress-bar-fill" style={{ width: `${completionPct}%` }} />
+          </div>
+          <div className="text-xs text-text-muted text-right">{completionPct}% Complete</div>
+        </div>
+        
+        <div className="flex flex-col gap-3">
+          <button type="button" className="btn-primary w-full" onClick={onContinue}>Continue Previous Plan</button>
+          <button type="button" className="btn-secondary w-full" onClick={onStartNew}>Start a New Plan</button>
+          <Link href="/login?redirect=/account/plans" className="text-sm text-gold hover:text-gold-light font-medium mt-2 block">
+            View All Plans
+          </Link>
         </div>
       </div>
     </section>
@@ -484,6 +526,11 @@ export function VisualPlannerApp() {
     const timeoutId = window.setTimeout(() => {
       setHydrated(true);
       trackPlannerEvent('planner_started');
+      
+      // Handle returning user behavior
+      if (store.step === 'welcome' && store.lastUpdatedAt !== null && (store.automationPackage !== null || store.rooms.length > 0)) {
+        store.setStep('resume_decision');
+      }
     }, 0);
     return () => window.clearTimeout(timeoutId);
   }, []);
@@ -591,6 +638,7 @@ export function VisualPlannerApp() {
 
   return (
     <MobileAppShell>
+      <SyncManager />
       <div className={`visual-planner visual-planner--${store.step}`}>
         {store.step !== 'welcome' && store.step !== 'complete' && (
           <>
@@ -599,13 +647,17 @@ export function VisualPlannerApp() {
           </>
         )}
         <header className="visual-planner__desktop-header">
-          <Link href="/" className="visual-brand"><span><Home /></span><div><strong>TEJUM</strong><small>Smart room planner</small></div></Link>
+          <Link href="/" className="visual-brand">
+            <img src="/tejum-landing/images/tejum-logo.png" alt="Tejum" className="h-8 w-auto" style={{ filter: 'brightness(0) invert(1)' }} />
+            <div><strong>TEJUM</strong><small>Smart room planner</small></div>
+          </Link>
           {store.step !== 'welcome' && store.step !== 'complete' && <div className="visual-header-step"><span>Guided configuration</span><strong>Step {stepIndex + 1} of {FLOW_STEPS.length} · {FLOW_STEPS[stepIndex]?.label}</strong></div>}
           <div className="visual-header-actions">{allPlacements.length > 0 && <span className="live-estimate-chip">Approx. {formatCompactCurrency(estimate.rangeLow)} – {formatCompactCurrency(estimate.rangeHigh)}</span>}<ThemeToggle compact /></div>
         </header>
         <main className="visual-planner__main">
           {store.step === 'welcome' && <WelcomeStage onStart={() => navigateTo('package')} />}
-          {store.step !== 'welcome' && store.step !== 'complete' && (
+          {store.step === 'resume_decision' && <ResumeDecisionStage onContinue={() => navigateTo('package')} onStartNew={() => { store.reset(); navigateTo('package'); }} />}
+          {store.step !== 'welcome' && store.step !== 'resume_decision' && store.step !== 'complete' && (
             <div className={`guided-configurator ${store.step === 'configure' ? 'is-room-setup' : ''}`}>
               <div className={`guided-configurator__content is-${transitionDirection}`} key={store.step}>
                 {store.step === 'package' && <PackageStage />}
@@ -623,7 +675,7 @@ export function VisualPlannerApp() {
           )}
           {store.step === 'complete' && <CompleteStage projectId={store.persistedProjectId} onNewPlan={store.reset} />}
         </main>
-        {store.step !== 'welcome' && store.step !== 'complete' && store.step !== 'configure' && store.step !== 'contact' && (
+        {store.step !== 'welcome' && store.step !== 'resume_decision' && store.step !== 'complete' && store.step !== 'configure' && store.step !== 'contact' && (
           <div className="visual-planner__desktop-actions">
             <button type="button" onClick={goBack}><ArrowLeft /> Back</button>
             <div><span>Saved on this device</span><button type="button" className="visual-primary-action" onClick={goNext} disabled={stickyDisabled}>{stickyLabel} <ArrowRight /></button></div>
@@ -632,7 +684,7 @@ export function VisualPlannerApp() {
         {store.step === 'configure' && <MobileStickyCTA label="Save & next room" onClick={finishRoom} secondaryLabel="Room map" onSecondary={() => navigateTo('rooms')} />}
         {showStickyAction && <MobileStickyCTA label={stickyLabel} onClick={goNext} disabled={stickyDisabled} secondaryLabel={backStep ? 'Back' : undefined} onSecondary={backStep ? goBack : undefined} />}
         {store.step === 'contact' && <MobileStickyCTA label={submitting ? 'Saving your plan…' : 'Send plan to Tejum'} onClick={submitPlan} loading={submitting} secondaryLabel="Back" onSecondary={goBack} />}
-        {store.step !== 'welcome' && store.step !== 'complete' && <MobileBottomNav active={mobileNavActive} onNavigate={handleMobileNavigation} />}
+        {store.step !== 'welcome' && store.step !== 'resume_decision' && store.step !== 'complete' && <MobileBottomNav active={mobileNavActive} onNavigate={handleMobileNavigation} />}
       </div>
     </MobileAppShell>
   );

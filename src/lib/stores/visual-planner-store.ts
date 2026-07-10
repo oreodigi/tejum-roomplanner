@@ -14,7 +14,7 @@ import { generateRoomsForProperty } from '@/lib/engines/room-generator';
 import { normalizePlacement } from '@/lib/engines/placement-geometry';
 import type { DevicePlacement, PropertyType, RoomLayout, RoomType, ProjectReadiness, AutomationScenario } from '@/lib/types';
 
-export type VisualPlannerStep = 'welcome' | 'package' | 'property' | 'readiness' | 'rooms' | 'configure' | 'scenarios' | 'review' | 'estimate' | 'contact' | 'complete';
+export type VisualPlannerStep = 'resume_decision' | 'welcome' | 'package' | 'property' | 'readiness' | 'rooms' | 'configure' | 'scenarios' | 'review' | 'estimate' | 'contact' | 'complete';
 
 export interface GuestPropertyDraft {
   propertyType: PropertyType;
@@ -83,6 +83,8 @@ interface VisualPlannerState {
   markRoomComplete: (roomId: string) => void;
   updateLead: (value: Partial<GuestLeadDraft>) => void;
   setPersistedProjectId: (projectId: string) => void;
+  lastUpdatedAt: number | null;
+  setLastUpdatedAt: (timestamp: number) => void;
   reset: () => void;
 }
 
@@ -191,6 +193,7 @@ export const useVisualPlannerStore = create<VisualPlannerState>()(
       activeRoomId: null,
       lead: initialLead,
       persistedProjectId: null,
+      lastUpdatedAt: null,
 
       setStep: (step) => set({ step }),
       setAutomationPackage: (automationPackage) => set({ automationPackage }),
@@ -307,9 +310,13 @@ export const useVisualPlannerStore = create<VisualPlannerState>()(
         }),
       })),
       markRoomComplete: (roomId) => set((state) => ({ rooms: state.rooms.map((room) => room.id === roomId ? { ...room, completionPct: 100 } : room) })),
-      updateLead: (value) => set((state) => ({ lead: { ...state.lead, ...value } })),
-      setPersistedProjectId: (persistedProjectId) => set({ persistedProjectId }),
-      reset: () => set({ step: 'welcome', automationPackage: null, property: { ...initialProperty }, readiness: { ...initialReadiness }, rooms: [], scenarios: [], activeRoomId: null, lead: { ...initialLead }, persistedProjectId: null }),
+      updateLead: (value) => set((state) => {
+        const now = Date.now();
+        return { lead: { ...state.lead, ...value }, lastUpdatedAt: now };
+      }),
+      setPersistedProjectId: (persistedProjectId) => set({ persistedProjectId, lastUpdatedAt: Date.now() }),
+      setLastUpdatedAt: (timestamp) => set({ lastUpdatedAt: timestamp }),
+      reset: () => set({ step: 'welcome', automationPackage: null, property: { ...initialProperty }, readiness: { ...initialReadiness }, rooms: [], scenarios: [], activeRoomId: null, lead: { ...initialLead }, persistedProjectId: null, lastUpdatedAt: null }),
     }),
     {
       name: 'tejum-visual-planner-v1',
@@ -325,15 +332,14 @@ export const useVisualPlannerStore = create<VisualPlannerState>()(
         };
       },
       partialize: (state) => ({
-        step: state.step,
         automationPackage: state.automationPackage,
         property: state.property,
         readiness: state.readiness,
         rooms: state.rooms,
         scenarios: state.scenarios,
-        activeRoomId: state.activeRoomId,
         lead: state.lead,
         persistedProjectId: state.persistedProjectId,
+        lastUpdatedAt: state.lastUpdatedAt,
       }),
     },
   ),

@@ -56,7 +56,7 @@ export async function POST(request: Request) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Invalid input.', details: (error as z.ZodError<any>).errors }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid input.', details: (error as z.ZodError<any>).issues }, { status: 400 });
     }
     console.error('Planner share error:', error);
     return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });

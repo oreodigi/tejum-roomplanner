@@ -1,13 +1,15 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { Home, Mail, Lock, User, ArrowRight, Eye, EyeOff } from 'lucide-react';
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect') || '/account';
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -52,7 +54,7 @@ export default function RegisterPage() {
 
       setSuccess(true);
       setTimeout(() => {
-        router.push('/planner/projects');
+        router.push(redirect);
         router.refresh();
       }, 1500);
     } catch (err: unknown) {
@@ -68,10 +70,7 @@ export default function RegisterPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-gold flex items-center justify-center">
-              <Home className="w-5 h-5 text-bg-primary" />
-            </div>
-            <span className="text-xl font-bold">TEJUM</span>
+            <img src="/tejum-landing/images/tejum-logo.png" alt="Tejum" className="h-10 w-auto" style={{ filter: 'brightness(0) invert(1)' }} />
           </Link>
           <h1 className="text-2xl font-bold mb-2">Create Account</h1>
           <p className="text-text-secondary text-sm">
@@ -171,5 +170,17 @@ export default function RegisterPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <RegisterForm />
+    </Suspense>
   );
 }

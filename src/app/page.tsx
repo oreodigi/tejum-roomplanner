@@ -2,8 +2,9 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowRight, Check, ChevronRight, Menu, Play, X } from 'lucide-react';
+import { useVisualPlannerStore } from '@/lib/stores/visual-planner-store';
 
 const ASSET_ROOT = '/tejum-landing';
 
@@ -38,10 +39,34 @@ const SYSTEMS = [
 export default function LandingPage() {
   const [activeScene, setActiveScene] = useState<(typeof SCENES)[number]['id']>('evening');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+  const store = useVisualPlannerStore();
+  
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+
   const scene = SCENES.find((item) => item.id === activeScene) ?? SCENES[1];
+  const hasDraft = hydrated && !bannerDismissed && store.lastUpdatedAt !== null && (store.automationPackage !== null || store.rooms.length > 0);
 
   return (
     <div className="brand-landing">
+      {hasDraft && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-bg-tertiary border-t border-border-color p-4 shadow-xl flex items-center justify-between gap-4 md:px-8">
+          <div className="flex-1 min-w-0">
+            <h4 className="text-sm font-semibold text-text-primary truncate">You have an unfinished smart-home plan.</h4>
+            <p className="text-xs text-text-secondary truncate">Pick up exactly where you left off.</p>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <Link href="/planner/new" className="btn-primary py-1.5 px-3 text-sm whitespace-nowrap">Continue Plan</Link>
+            <Link href="/login?redirect=/account/plans" className="btn-secondary py-1.5 px-3 text-sm hidden sm:inline-flex whitespace-nowrap">View Plans</Link>
+            <button type="button" onClick={() => setBannerDismissed(true)} className="p-1 text-text-muted hover:text-text-primary rounded-lg transition-colors" aria-label="Dismiss">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
       <header className="brand-header">
         <Link href="/" className="brand-header__logo" aria-label="TEJUM home">
           <Image src={`${ASSET_ROOT}/images/tejum-logo.png`} alt="TEJUM - Where your home meets its spark" width={400} height={170} priority />

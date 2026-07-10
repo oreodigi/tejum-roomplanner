@@ -164,10 +164,10 @@ export async function POST(request: Request) {
 
     // 3. Generate internal sales metadata
     const allPlacements = body.rooms.flatMap(r => r.placements);
-    const propertyParams = body.property;
+    const propertyParams = body.property as any;
     
     // Convert readiness strings to properly typed ProjectReadiness
-    const readinessParams: ProjectReadiness = {
+    const readinessParams: any = {
       condition: (body.readiness?.condition as any) || null,
       automationApproach: (body.readiness?.automationApproach as any) || null,
       electrical: (body.readiness?.electrical as any) || null,
@@ -179,7 +179,7 @@ export async function POST(request: Request) {
     };
 
     const boq = calculateBOQ(allPlacements, propertyParams, readinessParams);
-    const siteSurvey = generateSiteSurveyChecklist(propertyParams, readinessParams, body.rooms);
+    const siteSurvey = generateSiteSurveyChecklist(propertyParams, readinessParams, body.rooms as any);
 
     // 4. Create the Project
     const projectResult = await supabase.from('projects').insert({
