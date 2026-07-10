@@ -9,7 +9,7 @@ export function PlannerShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isPlannerRoute = pathname.includes('/planner/');
 
-  if (!isPlannerRoute) {
+  if (!isPlannerRoute || pathname === '/planner/new') {
     return <>{children}</>;
   }
 

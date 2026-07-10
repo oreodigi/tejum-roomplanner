@@ -146,7 +146,7 @@ export default function AutomationInterestPage() {
           What would you like your home to do for you?
         </h1>
         <p className="text-lg text-text-secondary">
-          Select all that apply — we'll tailor the planner based on your choices.
+          Select all that apply — we&apos;ll tailor the planner based on your choices.
         </p>
       </div>
 

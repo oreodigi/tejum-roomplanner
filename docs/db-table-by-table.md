@@ -319,9 +319,31 @@ This document explains the main Supabase/Postgres tables used by the Tejum Smart
   - future floor plans, diagrams, survey attachments
 
 ### `public.room_layouts`
-- Purpose: Visual or structured room layout artifacts.
+- Purpose: One visual/spatial layout per room.
+- Key fields:
+  - `width_m`, `length_m`, `height_m`
+  - `shape`
+  - `openings`
+  - `furniture`
+  - legacy `dimensions` and `canvas_data`
 - Used for:
-  - future room design support
+  - 3D room shell dimensions
+  - mobile top-view dimensions
+  - future openings and furniture editors
+
+### `public.device_placements`
+- Purpose: Spatial metadata for an individual project device.
+- Key fields:
+  - `project_device_id`
+  - `room_id`
+  - `wall_id`
+  - `position`, `rotation`
+  - `mounting_height_m`
+  - `placement_type`
+  - `coverage`
+- Relationship:
+  - one placement belongs to one `project_devices` row
+  - this keeps the visual planner connected to BOQ and estimate workflows
 
 ## Activity And Support
 
@@ -342,7 +364,7 @@ This document explains the main Supabase/Postgres tables used by the Tejum Smart
 - `public.users` -> `public.customers`
 - `public.customers` -> `public.projects`
 - `public.projects` -> `properties`, `rooms`, `security_requirements`, `automation_scenes`, `automation_rules`, `infrastructure_checks`, `boq_items`, `estimates`, `proposals`, `site_surveys`
-- `rooms` -> `project_devices`, `switchboards`, `room_controls`
+- `rooms` -> `room_layouts`, `project_devices`, `device_placements`, `switchboards`, `room_controls`
 
 ## Practical Reading Order
 

@@ -580,3 +580,67 @@ export type PlannerStep =
   | 'recommendation'
   | 'estimate'
   | 'summary';
+
+// --- Spatial room planning ---
+
+export type PlacementType = 'wall' | 'ceiling' | 'floor' | 'corner' | 'surface';
+
+export interface SpatialVector {
+  x: number;
+  y: number;
+  z: number;
+}
+
+export interface RoomOpening {
+  id: string;
+  type: 'door' | 'window' | 'arch';
+  wallId: string;
+  position: SpatialVector;
+  widthM: number;
+  heightM: number;
+}
+
+export interface FurnitureItem {
+  id: string;
+  type: string;
+  label: string;
+  position: SpatialVector;
+  rotation: SpatialVector;
+  size: SpatialVector;
+}
+
+export interface CoverageData {
+  kind: 'camera' | 'motion' | 'network';
+  angleDeg?: number;
+  rangeM: number;
+  direction?: SpatialVector;
+}
+
+export interface RoomLayout {
+  id?: string;
+  room_id?: string;
+  width_m: number;
+  length_m: number;
+  height_m: number;
+  shape: Record<string, unknown>;
+  openings: RoomOpening[];
+  furniture: FurnitureItem[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface DevicePlacement {
+  id: string;
+  project_device_id?: string | null;
+  room_id?: string | null;
+  device_key: string;
+  display_name: string;
+  wall_id?: string | null;
+  position: SpatialVector;
+  rotation: SpatialVector;
+  mounting_height_m: number;
+  placement_type: PlacementType;
+  coverage?: CoverageData | null;
+  created_at?: string;
+  updated_at?: string;
+}

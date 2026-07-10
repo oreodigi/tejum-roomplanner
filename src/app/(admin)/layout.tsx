@@ -6,8 +6,9 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import {
   LayoutDashboard, Users, FolderKanban, ShoppingBag,
-  Settings, LogOut, Loader2, ShieldAlert, Home, Menu
+  LogOut, Loader2, ShieldAlert, Home, Menu
 } from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function AdminLayout({
   children,
@@ -142,6 +143,7 @@ export default function AdminLayout({
             Internal Sales Workspace
           </div>
           <div className="flex items-center gap-3">
+            <ThemeToggle compact />
             <Link href="/planner/projects" className="btn-secondary !py-1.5 !px-3.5 text-xs">
               Open Customer Planner
             </Link>

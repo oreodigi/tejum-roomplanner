@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ArrowRight, Sparkles, Shield, Lightbulb, Brain, Home } from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function LandingPage() {
   return (
@@ -15,6 +16,7 @@ export default function LandingPage() {
             <span className="text-xs text-text-muted hidden sm:inline">Smart Home Planner</span>
           </div>
           <div className="flex items-center gap-3">
+            <ThemeToggle compact />
             <Link href="/login" className="btn-ghost text-sm">
               Sign In
             </Link>
@@ -35,7 +37,7 @@ export default function LandingPage() {
             </div>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-tight mb-6">
               Design Your{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-gold to-gold-light">
+              <span className="text-gold">
                 Intelligent Home
               </span>
             </h1>
@@ -112,10 +114,10 @@ export default function LandingPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { step: '01', title: 'Tell Us About You', desc: 'Your details and what you want to automate' },
-              { step: '02', title: 'Configure Property', desc: 'Property type, rooms, and floor details' },
-              { step: '03', title: 'Plan Each Room', desc: 'Devices, switchboards, controls, and scenes' },
-              { step: '04', title: 'Get Your Plan', desc: 'Recommendations, estimates, and BOQ' },
+              { step: '01', title: 'Choose Your Home', desc: 'Select a package and generate your room map' },
+              { step: '02', title: 'Set Up Rooms', desc: 'Place recommended devices in each space' },
+              { step: '03', title: 'Review the Plan', desc: 'See coverage, gaps, upgrades and estimate' },
+              { step: '04', title: 'Talk to Tejum', desc: 'Book consultation, site visit, or detailed BOQ' },
             ].map((item) => (
               <div key={item.step} className="text-center flex flex-col items-center gap-3">
                 <div className="w-14 h-14 rounded-full bg-gold-muted border-2 border-gold/30 flex items-center justify-center text-gold font-bold text-lg">

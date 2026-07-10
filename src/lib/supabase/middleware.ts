@@ -40,7 +40,7 @@ export async function updateSession(request: NextRequest) {
   const isAuthRoute = request.nextUrl.pathname.startsWith('/login') || 
                       request.nextUrl.pathname.startsWith('/register');
   const isProtectedRoute =
-    request.nextUrl.pathname.startsWith('/planner') ||
+    (request.nextUrl.pathname.startsWith('/planner') && request.nextUrl.pathname !== '/planner/new') ||
     ADMIN_ROUTE_PREFIXES.some((prefix) => request.nextUrl.pathname.startsWith(prefix));
 
   if (!user && isProtectedRoute) {

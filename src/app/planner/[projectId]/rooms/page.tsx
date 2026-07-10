@@ -210,9 +210,9 @@ export default function RoomsPage() {
             <div className="w-20 h-20 bg-accent/10 rounded-full flex items-center justify-center mb-6">
               <Home className="w-10 h-10 text-accent" />
             </div>
-            <h2 className="text-2xl font-bold mb-3">Let's build your home</h2>
+            <h2 className="text-2xl font-bold mb-3">Let&apos;s build your home</h2>
             <p className="text-text-secondary mb-8 max-w-md mx-auto">
-              We'll create a smart-home blueprint tailored to your property. You can easily customize it in the next step.
+              We&apos;ll create a smart-home blueprint tailored to your property. You can easily customize it in the next step.
             </p>
             <button
               type="button"

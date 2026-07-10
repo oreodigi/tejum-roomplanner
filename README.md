@@ -1,58 +1,85 @@
-# Tejum Smart Planner
+# Tejum Smart Room Planner
 
-A playful, premium, interactive smart-home configurator and estimation tool built with Next.js, Tailwind CSS, and Supabase.
+A guest-first visual smart-home configurator for Indian homes. Customers choose an automation package, generate a property-specific room map, place devices room by room, see a preliminary estimate, and send the structured plan to Tejum for consultation, site survey, or BOQ preparation.
+
+## Product Flow
+
+1. Choose an automation package.
+2. Choose a property type and essential counts.
+3. Generate and adjust the room map.
+4. Configure each room in 3D on desktop or top-view on mobile.
+5. Review coverage, gaps, and upgrades.
+6. See a preliminary estimate range.
+7. Submit the plan for consultation, site visit, BOQ, or WhatsApp follow-up.
+
+Planning starts without an account. The Zustand draft is persisted locally. Supabase records are created only after lead capture.
 
 ## Features
 
-- **Premium Guided UX**: A dark-mode, glassmorphic, two-column layout providing a seamless app-like experience.
-- **Dynamic Room Mapping**: Auto-generates property layouts based on home type (e.g., 3BHK, Villa).
-- **Interactive Device Selection**: Large touch-friendly toggles and steppers instead of boring form inputs.
-- **Live Progress Tracking**: Visual timeline tracking the user's progress through the configuration journey.
-- **End-to-End Workflow**: Captures customer details, automation interests, per-room device requirements, estimates, and BOQ generation.
+- Guest-first planning with no login required to start
+- Property-aware room generation that respects adjusted counts
+- Room rename, duplicate, delete, floor move, and regeneration controls
+- Essential, Comfort, Premium, and Luxury AI room presets
+- Lazy-loaded React Three Fiber room visualizer
+- Clickable wall, ceiling, floor, corner, and surface placement zones
+- Device movement, removal, coverage visualization, and room dimensions
+- Mobile-specific top-view planner, device tray, sticky CTA, and bottom navigation
+- Live hardware, installation, and integration estimate range
+- System-aware light/dark mode with persistent preference
+- Real Supabase customer, lead, project, room, device, layout, placement, and estimate persistence
+- Authenticated legacy planner, admin leads, BOQ, proposal, and catalogue routes
 
 ## Tech Stack
 
-- **Framework**: [Next.js 15+](https://nextjs.org/) (App Router, React 19)
-- **Styling**: [Tailwind CSS v3](https://tailwindcss.com/)
-- **Database / Auth**: [Supabase](https://supabase.com/)
-- **Icons**: [Lucide React](https://lucide.dev/)
-- **State Management**: Zustand (via custom hooks)
+- Next.js 16 App Router and React 19
+- TypeScript and Tailwind CSS 4
+- Supabase Auth and Postgres
+- Zustand and TanStack Query
+- Three.js, React Three Fiber, Drei, and Postprocessing
+- next-themes and Lucide React
 
-## Getting Started
+## Environment
 
-First, ensure your environment variables are set up in `.env.local`:
-```
+Create `.env.local`:
+
+```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_publishable_key
+SUPABASE_SERVICE_ROLE_KEY=your_server_only_service_role_key
 ```
 
-Run the development server:
+`SUPABASE_SERVICE_ROLE_KEY` is used only by the server-side guest planner API. Never expose it through a `NEXT_PUBLIC_` variable.
+
+## Local Development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000/planner/new`.
+
+Quality checks:
+
+```bash
+npm run lint
+npm run build
+```
+
+## Database
+
+The main schema and seed are under `supabase/`. Apply linked migrations with:
+
+```bash
+npx supabase db push --linked
+```
+
+The spatial migration adds room dimensions, layout data, `device_placements`, RLS, and the infrastructure router device type.
 
 ## Documentation
 
-- [Customer Journey](docs/customer-journey.md) - Explains the step-by-step user flow.
-- [Database Table-by-Table](docs/db-table-by-table.md) - Details the Supabase relational schema.
-- [UI Components](docs/ui-components.md) - Documents the premium UI design system and custom React components used in the planner.
-
-## UI Design Guidelines
-
-When developing new features for this project:
-1. **Never use standard HTML forms**: Always opt for `ChoiceCard`, `DeviceToggleCard`, or `QuantityStepper`.
-2. **Prioritize animations**: Wrap route content in `<PlannerStep>` for smooth transitions.
-3. **Keep it premium**: Maintain the dark navy/charcoal aesthetic with electric blue and teal accents.
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new).
+- [Customer Journey](docs/customer-journey.md)
+- [Admin and Sales Workflow](docs/admin-sales-workflow.md)
+- [Database Table by Table](docs/db-table-by-table.md)
+- [Visual Planner Architecture](docs/visual-planner-architecture.md)
+- [UI Components](docs/ui-components.md)

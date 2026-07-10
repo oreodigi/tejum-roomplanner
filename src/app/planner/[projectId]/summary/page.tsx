@@ -128,7 +128,7 @@ export default function SummaryPage() {
             Your Smart Home Plan Is Ready
           </h1>
           <p className="text-lg text-text-secondary max-w-lg mx-auto mb-8">
-            Congratulations {customer?.full_name || 'Guest'}! We've mapped out your requirements and prepared your configurations.
+            Congratulations {customer?.full_name || 'Guest'}! We&apos;ve mapped out your requirements and prepared your configurations.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button

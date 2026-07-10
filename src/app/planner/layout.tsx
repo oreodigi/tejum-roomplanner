@@ -2,11 +2,16 @@
 
 import Link from 'next/link';
 import { Home, ChevronRight, Save, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { usePlannerStore } from '@/lib/stores/planner-store';
 import { PlannerShell } from '@/components/planner/PlannerShell';
 
 export default function PlannerLayout({ children }: { children: React.ReactNode }) {
   const { saveStatus } = usePlannerStore();
+  const pathname = usePathname();
+
+  if (pathname === '/planner/new') return <>{children}</>;
 
   const saveIcons = {
     saved: <CheckCircle2 className="w-3.5 h-3.5" />,
@@ -39,6 +44,7 @@ export default function PlannerLayout({ children }: { children: React.ReactNode 
           </div>
 
           <div className="flex items-center gap-3">
+            <ThemeToggle compact />
             <div className={`save-indicator ${saveStatus}`}>
               {saveIcons[saveStatus]}
               <span className="hidden sm:inline">{saveLabels[saveStatus]}</span>

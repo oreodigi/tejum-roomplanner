@@ -52,6 +52,10 @@ By the time the customer reaches review/recommendation/estimate, the system alre
 
 This means the internal team starts from a structured project, not from a blank lead sheet.
 
+The primary guest visual planner now creates this structure only after conversion. Leads created through it use `source = visual_guest_planner`, include the requested next action in lead notes, and store timeline/package metadata on the project. A site-visit request starts at `site_survey_required`; other intents start at `requirement_completed`.
+
+The internal team also receives room dimensions and spatial device placements, so consultants can validate mounting and coverage assumptions during the site survey.
+
 ### 2. Lead Appears In Internal Workspace
 
 Internal users work from:

@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { usePlannerStore } from '@/lib/stores/planner-store';
 import { getRoomTypeOption, ROOM_DEVICE_DEFAULTS } from '@/lib/constants/room-types';
 import type { Room, ProjectDevice, DeviceType } from '@/lib/types';
-import { ArrowLeft, Lightbulb, Loader2, AlertTriangle, Monitor, Fan, Video, Speaker, Lock } from 'lucide-react';
+import { ArrowLeft, Lightbulb, AlertTriangle, Monitor, Fan, Video, Speaker, Lock } from 'lucide-react';
 import { PlannerStep } from '@/components/planner/PlannerStep';
 import { DeviceToggleCard } from '@/components/planner/DeviceToggleCard';
 import { StickyPlannerActions } from '@/components/planner/StickyPlannerActions';
@@ -146,6 +146,33 @@ export default function RoomConfigPage() {
     return <Lightbulb className="w-7 h-7" />;
   }
 
+  async function handleRoomComplete() {
+    markSaving();
+    const supabase = createClient();
+    const { error } = await supabase.from('rooms').update({ completion_pct: 100 }).eq('id', roomId);
+    if (error) {
+      markSaveError();
+      return;
+    }
+
+    const { data: projectRooms } = await supabase
+      .from('rooms')
+      .select('id')
+      .eq('project_id', projectId)
+      .order('sort_order');
+    const currentIndex = projectRooms?.findIndex((item) => item.id === roomId) ?? -1;
+    const nextRoom = currentIndex >= 0 ? projectRooms?.[currentIndex + 1] : null;
+    markSaved();
+
+    if (nextRoom) {
+      router.push(`/planner/${projectId}/rooms/${nextRoom.id}`);
+      return;
+    }
+
+    await supabase.from('projects').update({ current_step: 'review' }).eq('id', projectId);
+    router.push(`/planner/${projectId}/review`);
+  }
+
   if (loading) {
     return (
       <PlannerStep>
@@ -222,8 +249,8 @@ export default function RoomConfigPage() {
 
       <StickyPlannerActions
         onBack={() => router.push(`/planner/${projectId}/rooms`)}
-        onNext={() => router.push(`/planner/${projectId}/summary`)}
-        nextText="Done Configuring"
+        onNext={handleRoomComplete}
+        nextText="Save & Next Room"
       />
     </PlannerStep>
   );
