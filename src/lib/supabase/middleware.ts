@@ -39,9 +39,10 @@ export async function updateSession(request: NextRequest) {
   // Protect planner and admin routes
   const isAuthRoute = request.nextUrl.pathname.startsWith('/login') || 
                       request.nextUrl.pathname.startsWith('/register');
+  const isPublicPlannerRoute = ['/planner/new', '/planner/3bhk'].includes(request.nextUrl.pathname);
   const isProtectedRoute =
     request.nextUrl.pathname.startsWith('/account') ||
-    (request.nextUrl.pathname.startsWith('/planner') && request.nextUrl.pathname !== '/planner/new') ||
+    (request.nextUrl.pathname.startsWith('/planner') && !isPublicPlannerRoute) ||
     ADMIN_ROUTE_PREFIXES.some((prefix) => request.nextUrl.pathname.startsWith(prefix));
 
   if (!user && isProtectedRoute) {
