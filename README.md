@@ -27,6 +27,7 @@ The visualizer is built with Three.js, React Three Fiber, and Drei. It includes:
 - constrained dragging that preserves mounting surfaces, height rules, room boundaries, and wall rotations
 - top view and orbit-camera controls on desktop
 - 2D and 3D room modes on mobile
+- connected furnished 3BHK prototype at `/planner/3bhk` with room navigation, first-person walkthrough, and cross-room device placement
 
 The shared placement rules live in `src/lib/engines/placement-geometry.ts`. All placement creation and updates must pass through that engine.
 
