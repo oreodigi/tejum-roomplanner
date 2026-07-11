@@ -11,7 +11,7 @@ export default function PlannerLayout({ children }: { children: React.ReactNode 
   const { saveStatus } = usePlannerStore();
   const pathname = usePathname();
 
-  if (pathname === '/planner/new') return <>{children}</>;
+  if (pathname === '/planner/new' || pathname === '/planner/3bhk') return <>{children}</>;
 
   const saveIcons = {
     saved: <CheckCircle2 className="w-3.5 h-3.5" />,
