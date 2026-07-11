@@ -8,6 +8,10 @@ The visualizer is a guided smart-home planning tool. It is not a general CAD edi
 
 ## Coordinate System
 
+## Connected Home Prototype
+
+`/planner/3bhk` renders the `urban-3bhk-1650` template from `src/lib/constants/home-templates.ts`. `HomePlanner3D` composes room-relative furniture in one apartment coordinate system and supports overview, pointer-lock walkthrough, room navigation, and wall/floor device placement. It remains separate from persisted guest projects until template placements are migrated into the planner store and Supabase.
+
 Room dimensions are meters.
 
 - `x`: room width; negative is left, positive is right
