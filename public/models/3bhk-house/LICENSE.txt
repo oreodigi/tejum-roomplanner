@@ -1,0 +1,7 @@
+Model: 3bhk house
+Source: https://sketchfab.com/3d-models/3bhk-house-82dbfb59fa2c4f8f8463eb370f1390df
+Author: Home Design 3D — https://sketchfab.com/homedesign3d
+License: CC BY-NC-SA 4.0 — https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+This model is included only in a private, noncommercial evaluation prototype.
+It must not be included in a public or commercial Tejum release without separate commercial permission from the creator.
