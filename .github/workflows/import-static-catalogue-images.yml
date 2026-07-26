@@ -1,0 +1,65 @@
+name: Import final Tejum catalogue images
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - '.github/workflows/import-static-catalogue-images.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import-images:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Download final catalogue artwork
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from urllib.parse import urlsplit, parse_qs
+          from urllib.request import Request, urlopen
+
+          images = {
+              'tejum-4bhk-smart-luxury.png': 'https://media.canva.com/v2/document-image/hash:-1821375498/height:499/id:DAHQfUhZXEA/type:B/width:400?brand=BAFRoenlaWU&csig=AAAAAAAAAAAAAAAAAAAAALPegGuOta7sasaTVck3cn0PANfDFTopPrFyXUtDqn7u&disableexport=T&exp=1785076050&fallback=https%3A%2F%2Fs3.amazonaws.com%2Fdocument-export.canva.com%2FhZXEA%2FDAHQfUhZXEA%2F1%2Fthumbnail%2F0001.png%3FX-Amz-Algorithm%3DAWS4-HMAC-SHA256%26X-Amz-Credential%3DAKIAQYCGKMUHYGFFNMW3%252F20260725%252Fus-east-1%252Fs3%252Faws4_request%26X-Amz-Date%3D20260725T133528Z%26X-Amz-Expires%3D89522%26X-Amz-Signature%3D04d56a5d4e87b728cbf48bf8c00098667e325e9add95154bdc4a0cf85e35b672%26X-Amz-SignedHeaders%3Dhost%26response-expires%3DSun%252C%252026%2520Jul%25202026%252014%253A27%253A30%2520GMT&osig=AAAAAAAAAAAAAAAAAAAAAJxhn_MmRV7-IfrvOMBuCm4gpR40DxM3tio_FtHdi_m8&page=1&signed=brand%2Cdisableexport%2Cfallback%2Cpage%2Cversion&signer=document-rpc&version=1',
+              'tejum-4bhk-smart-premium.png': 'https://media.canva.com/v2/document-image/hash:-619337162/height:499/id:DAHQfbhHf0M/type:B/width:400?brand=BAFRoenlaWU&csig=AAAAAAAAAAAAAAAAAAAAAH3Rxite80qAnqbE8DegqDCbuemRUxY7l90HjFaX3Z2I&disableexport=T&exp=1785077049&fallback=https%3A%2F%2Fs3.amazonaws.com%2Fdocument-export.canva.com%2FhHf0M%2FDAHQfbhHf0M%2F1%2Fthumbnail%2F0001.png%3FX-Amz-Algorithm%3DAWS4-HMAC-SHA256%26X-Amz-Credential%3DAKIAQYCGKMUHYGFFNMW3%252F20260726%252Fus-east-1%252Fs3%252Faws4_request%26X-Amz-Date%3D20260726T043746Z%26X-Amz-Expires%3D36383%26X-Amz-Signature%3D34f3803b3baac2883c94fd83defe93b0962862361ee8a92c7586b23daba3c427%26X-Amz-SignedHeaders%3Dhost%26response-expires%3DSun%252C%252026%2520Jul%25202026%252014%253A44%253A09%2520GMT&osig=AAAAAAAAAAAAAAAAAAAAAC1ohT07E7wFhbLWdPX16Vs7v4mAXKArNPFXupkihxFo&page=1&signed=brand%2Cdisableexport%2Cfallback%2Cpage%2Cversion&signer=document-rpc&version=1',
+              'tejum-2bhk-smart-luxury.png': 'https://media.canva.com/v2/document-image/hash:-1538046102/height:548/id:DAHQfVfGIxA/type:B/width:365?brand=BAFRoenlaWU&csig=AAAAAAAAAAAAAAAAAAAAAHy2zYQcaSx5ieec6F7xexqR5pGGFxITGAUbwSTGCcW8&disableexport=T&exp=1785076748&fallback=https%3A%2F%2Fs3.amazonaws.com%2Fdocument-export.canva.com%2FfGIxA%2FDAHQfVfGIxA%2F1%2Fthumbnail%2F0001.png%3FX-Amz-Algorithm%3DAWS4-HMAC-SHA256%26X-Amz-Credential%3DAKIAQYCGKMUHYGFFNMW3%252F20260725%252Fus-east-1%252Fs3%252Faws4_request%26X-Amz-Date%3D20260725T134401Z%26X-Amz-Expires%3D89707%26X-Amz-Signature%3D4e641f3ddc12e1a54d6fb8206f6dc03873088553070e305654a30cbaab829754%26X-Amz-SignedHeaders%3Dhost%26response-expires%3DSun%252C%252026%2520Jul%25202026%252014%253A39%253A08%2520GMT&osig=AAAAAAAAAAAAAAAAAAAAAMT5V56fNrekuPRTiBh5BDDIXQ4XogLdo1WFJclM_Lyh&page=1&signed=brand%2Cdisableexport%2Cfallback%2Cpage%2Cversion&signer=document-rpc&version=1',
+              'tejum-2bhk-smart-plus.png': 'https://media.canva.com/v2/document-image/hash:-1973193037/height:547/id:DAHQfXgAnXY/type:B/width:365?brand=BAFRoenlaWU&csig=AAAAAAAAAAAAAAAAAAAAANJ2idvcWwlJgBJxsXUZb659_nxh7Pxq7e87DyhGN24D&disableexport=T&exp=1785076783&fallback=https%3A%2F%2Fs3.amazonaws.com%2Fdocument-export.canva.com%2FgAnXY%2FDAHQfXgAnXY%2F1%2Fthumbnail%2F0001.png%3FX-Amz-Algorithm%3DAWS4-HMAC-SHA256%26X-Amz-Credential%3DAKIAQYCGKMUHYGFFNMW3%252F20260725%252Fus-east-1%252Fs3%252Faws4_request%26X-Amz-Date%3D20260725T235035Z%26X-Amz-Expires%3D53348%26X-Amz-Signature%3D0d2c102d6f835276075c68d4b08ce98f9f9a46254e6b642be81e132714a0bf0b%26X-Amz-SignedHeaders%3Dhost%26response-expires%3DSun%252C%252026%2520Jul%25202026%252014%253A39%253A43%2520GMT&osig=AAAAAAAAAAAAAAAAAAAAAMNUoz70rs7vujPeAxK7LvNOjBweRMIy4XwVPL93JtU3&page=1&signed=brand%2Cdisableexport%2Cfallback%2Cpage%2Cversion&signer=document-rpc&version=1',
+              'tejum-4bhk-smart-start.png': 'https://media.canva.com/v2/document-image/hash:13225132/height:547/id:DAHQfR_byDE/type:B/width:365?brand=BAFRoenlaWU&csig=AAAAAAAAAAAAAAAAAAAAAP5MD3Hi2jrLfWcaY4dlMHLNbeSl7SUufmPCuQPvpxNz&disableexport=T&exp=1785076818&fallback=https%3A%2F%2Fs3.amazonaws.com%2Fdocument-export.canva.com%2F_byDE%2FDAHQfR_byDE%2F1%2Fthumbnail%2F0001.png%3FX-Amz-Algorithm%3DAWS4-HMAC-SHA256%26X-Amz-Credential%3DAKIAQYCGKMUHYGFFNMW3%252F20260726%252Fus-east-1%252Fs3%252Faws4_request%26X-Amz-Date%3D20260726T013856Z%26X-Amz-Expires%3D46882%26X-Amz-Signature%3D10c84225e267419f46c384163d7c459f2b3d984cfa2274dadbc817bfa4a240f8%26X-Amz-SignedHeaders%3Dhost%26response-expires%3DSun%252C%252026%2520Jul%25202026%252014%253A40%253A18%2520GMT&osig=AAAAAAAAAAAAAAAAAAAAAGunaVtDQoIS0vH9d6-l85q3of4Ke8MD7rGH6_bixpfb&page=1&signed=brand%2Cdisableexport%2Cfallback%2Cpage%2Cversion&signer=document-rpc&version=1',
+              'tejum-4bhk-smart-plus.png': 'https://media.canva.com/v2/document-image/hash:-19570851/height:547/id:DAHQfU0CJmo/type:B/width:365?brand=BAFRoenlaWU&csig=AAAAAAAAAAAAAAAAAAAAALphHJdm05puENbkrJyirPCouuHGwWeCj3xWTfYYw0Xt&disableexport=T&exp=1785076855&fallback=https%3A%2F%2Fs3.amazonaws.com%2Fdocument-export.canva.com%2F0CJmo%2FDAHQfU0CJmo%2F1%2Fthumbnail%2F0001.png%3FX-Amz-Algorithm%3DAWS4-HMAC-SHA256%26X-Amz-Credential%3DAKIAQYCGKMUHYGFFNMW3%252F20260726%252Fus-east-1%252Fs3%252Faws4_request%26X-Amz-Date%3D20260726T095129Z%26X-Amz-Expires%3D17366%26X-Amz-Signature%3D2322cf605daf5430b10e30cf1cd687400f9e06bb6c494636f683e1a31d7e004b%26X-Amz-SignedHeaders%3Dhost%26response-expires%3DSun%252C%252026%2520Jul%25202026%252014%253A40%253A55%2520GMT&osig=AAAAAAAAAAAAAAAAAAAAAGpNrunMqUIRgQO5_zV-LwIyApwzPKosi82fXqYKNyWZ&page=1&signed=brand%2Cdisableexport%2Cfallback%2Cpage%2Cversion&signer=document-rpc&version=1',
+              'tejum-3bhk-smart-luxury.png': 'https://media.canva.com/v2/document-image/hash:-385082157/height:548/id:DAHQfa2FCog/type:B/width:365?brand=BAFRoenlaWU&csig=AAAAAAAAAAAAAAAAAAAAACQnIoUTbv8Ix3miQQ-gM1yVYpIJWwJIJK2kf0RqTHJG&disableexport=T&exp=1785076894&fallback=https%3A%2F%2Fs3.amazonaws.com%2Fdocument-export.canva.com%2F2FCog%2FDAHQfa2FCog%2F1%2Fthumbnail%2F0001.png%3FX-Amz-Algorithm%3DAWS4-HMAC-SHA256%26X-Amz-Credential%3DAKIAQYCGKMUHYGFFNMW3%252F20260726%252Fus-east-1%252Fs3%252Faws4_request%26X-Amz-Date%3D20260726T041351Z%26X-Amz-Expires%3D37663%26X-Amz-Signature%3D54054b75a9783a0555108f1ed56f16b0a75b287cfdb1d76e7e8af11b1a4104ca%26X-Amz-SignedHeaders%3Dhost%26response-expires%3DSun%252C%252026%2520Jul%25202026%252014%253A41%253A34%2520GMT&osig=AAAAAAAAAAAAAAAAAAAAAJD-3KNQwinGV1SDgD13yd5WNPEbwMBq3KDbhPfIokGj&page=1&signed=brand%2Cdisableexport%2Cfallback%2Cpage%2Cversion&signer=document-rpc&version=1',
+              'tejum-3bhk-smart-start.png': 'https://media.canva.com/v2/document-image/hash:-1035595512/height:547/id:DAHQfZvGCPA/type:B/width:365?brand=BAFRoenlaWU&csig=AAAAAAAAAAAAAAAAAAAAAO5-GAEdmCJEUAhSeBYsPeVrPqH4_m4tVlplDDOAxeLd&disableexport=T&exp=1785076931&fallback=https%3A%2F%2Fs3.amazonaws.com%2Fdocument-export.canva.com%2FvGCPA%2FDAHQfZvGCPA%2F1%2Fthumbnail%2F0001.png%3FX-Amz-Algorithm%3DAWS4-HMAC-SHA256%26X-Amz-Credential%3DAKIAQYCGKMUHYGFFNMW3%252F20260726%252Fus-east-1%252Fs3%252Faws4_request%26X-Amz-Date%3D20260726T005709Z%26X-Amz-Expires%3D49502%26X-Amz-Signature%3Dae058e004418aea131dd7a023d1acbb0813a648250a0dcf3d90a9054c398f8b2%26X-Amz-SignedHeaders%3Dhost%26response-expires%3DSun%252C%252026%2520Jul%25202026%252014%253A42%253A11%2520GMT&osig=AAAAAAAAAAAAAAAAAAAAADDlWZTIgxQ3y_N538MJlijkKD8zTti247aiMMJwxlDu&page=1&signed=brand%2Cdisableexport%2Cfallback%2Cpage%2Cversion&signer=document-rpc&version=1',
+              'tejum-2bhk-smart-premium.png': 'https://media.canva.com/v2/document-image/hash:1182546623/height:547/id:DAHQfQPNjLA/type:B/width:365?brand=BAFRoenlaWU&csig=AAAAAAAAAAAAAAAAAAAAAEsTrDuax28doz_voyx67zUEQigAA5f8t_76UVgHjmxY&disableexport=T&exp=1785076966&fallback=https%3A%2F%2Fs3.amazonaws.com%2Fdocument-export.canva.com%2FPNjLA%2FDAHQfQPNjLA%2F1%2Fthumbnail%2F0001.png%3FX-Amz-Algorithm%3DAWS4-HMAC-SHA256%26X-Amz-Credential%3DAKIAQYCGKMUHYGFFNMW3%252F20260726%252Fus-east-1%252Fs3%252Faws4_request%26X-Amz-Date%3D20260726T000538Z%26X-Amz-Expires%3D52628%26X-Amz-Signature%3D187712b2738e4377bbca3d7f8eeeae63a4b58a690d8ad4dec0795f0a1ba79957%26X-Amz-SignedHeaders%3Dhost%26response-expires%3DSun%252C%252026%2520Jul%25202026%252014%253A42%253A46%2520GMT&osig=AAAAAAAAAAAAAAAAAAAAACULQounPmA9wTu-oAB25d-SkodiUP9OxshcVLxAs-4q&page=1&signed=brand%2Cdisableexport%2Cfallback%2Cpage%2Cversion&signer=document-rpc&version=1',
+              'tejum-3bhk-smart-premium.png': 'https://media.canva.com/v2/document-image/hash:1254831974/height:547/id:DAHQfUA66UQ/type:B/width:365?brand=BAFRoenlaWU&csig=AAAAAAAAAAAAAAAAAAAAAGgyAjGPYA1yQ_G-tagbMAj7CiH5RShRI1K26buC6AXZ&disableexport=T&exp=1785077005&fallback=https%3A%2F%2Fs3.amazonaws.com%2Fdocument-export.canva.com%2FA66UQ%2FDAHQfUA66UQ%2F1%2Fthumbnail%2F0001.png%3FX-Amz-Algorithm%3DAWS4-HMAC-SHA256%26X-Amz-Credential%3DAKIAQYCGKMUHYGFFNMW3%252F20260725%252Fus-east-1%252Fs3%252Faws4_request%26X-Amz-Date%3D20260725T191735Z%26X-Amz-Expires%3D69950%26X-Amz-Signature%3Da477b022b47c16c249e37d80ecb2acf639df584a14ab4688b9e8793dc9e2113c%26X-Amz-SignedHeaders%3Dhost%26response-expires%3DSun%252C%252026%2520Jul%25202026%252014%253A43%253A25%2520GMT&osig=AAAAAAAAAAAAAAAAAAAAALv-ijCdN-4xzj_wH9ehX85R1CP6xCiDF12rkhzQCdCJ&page=1&signed=brand%2Cdisableexport%2Cfallback%2Cpage%2Cversion&signer=document-rpc&version=1',
+          }
+
+          destination = Path('public/catalogue-images')
+          destination.mkdir(parents=True, exist_ok=True)
+
+          for filename, preview_url in images.items():
+              query = parse_qs(urlsplit(preview_url).query)
+              source_url = query['fallback'][0]
+              request = Request(source_url, headers={'User-Agent': 'Mozilla/5.0'})
+              with urlopen(request, timeout=90) as response:
+                  data = response.read()
+              if len(data) < 50000 or not data.startswith(b'\x89PNG'):
+                  raise RuntimeError(f'Invalid download for {filename}: {len(data)} bytes')
+              (destination / filename).write_bytes(data)
+              print(f'{filename}: {len(data)} bytes')
+          PY
+
+      - name: Commit static catalogue images
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/catalogue-images
+          git diff --cached --quiet && exit 0
+          git commit -m 'Add final static catalogue images'
+          git push
